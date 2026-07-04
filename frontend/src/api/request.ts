@@ -30,8 +30,10 @@ request.interceptors.response.use(
         case 401:
           localStorage.removeItem('token')
           localStorage.removeItem('user')
-          window.location.href = '/login'
-          ElMessage.error('登录已过期，请重新登录')
+          if (!window.location.pathname.includes('/login')) {
+            ElMessage.error('登录已过期，请重新登录')
+            window.location.href = '/login'
+          }
           break
         case 403:
           ElMessage.error('没有权限执行此操作')

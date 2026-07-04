@@ -155,25 +155,29 @@ func NewRouter(
 	}
 
 	// ── Store Routes ──────────────────────────────────────
-	supplier := v1.Group("/suppliers").Use(authMiddleware(token))
+	sg := v1.Group("/suppliers").Use(authMiddleware(token))
 	{
-		supplier.GET("/", supplierHandler.List)
-		supplier.GET("/:id", supplierHandler.Get)
-		sa := supplier.Use(adminMiddleware())
+		sg.GET("/", supplierHandler.List)
+		sg.GET("", supplierHandler.List)  // no trailing slash
+		sg.GET("/:id", supplierHandler.Get)
+		sa := sg.Use(adminMiddleware())
 		{
 			sa.POST("/", supplierHandler.Create)
+			sa.POST("", supplierHandler.Create)
 			sa.PUT("/:id", supplierHandler.Update)
 			sa.DELETE("/:id", supplierHandler.Delete)
 		}
 	}
-	purchase := v1.Group("/purchases").Use(authMiddleware(token))
+	pg := v1.Group("/purchases").Use(authMiddleware(token))
 	{
-		purchase.GET("/", purchaseHandler.List)
-		purchase.GET("/:id", purchaseHandler.Get)
-		purchase.GET("/:id/items", purchaseHandler.ListItems)
-		pa := purchase.Use(adminMiddleware())
+		pg.GET("/", purchaseHandler.List)
+		pg.GET("", purchaseHandler.List)
+		pg.GET("/:id", purchaseHandler.Get)
+		pg.GET("/:id/items", purchaseHandler.ListItems)
+		pa := pg.Use(adminMiddleware())
 		{
 			pa.POST("/", purchaseHandler.Create)
+			pa.POST("", purchaseHandler.Create)
 		}
 	}
 

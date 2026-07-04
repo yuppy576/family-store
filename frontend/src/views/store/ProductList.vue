@@ -51,7 +51,7 @@ async function loadData(){
   }finally{loading.value=false}
 }
 async function loadCategories(){
-  try{const res=await request.get('/categories');const d=res.data;categories.value=(d.success?d.data:d).categories||[]}catch{}
+  try{const res=await request.get('/categories',{params:{skip:1,limit:99}});const d=res.data;categories.value=(d.success?d.data:d).categories||[]}catch{}
 }
 function showAdd(){isEdit.value=false;Object.assign(form,{name:'',category_id:null,price:0,stock:0,image:''});dialogVisible.value=true}
 function showEdit(row:any){

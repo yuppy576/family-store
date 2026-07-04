@@ -55,6 +55,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/store/PurchaseList.vue'),
         meta: { title: '进货管理' },
       },
+      {
+        path: 'store/pos',
+        name: 'PosCheckout',
+        component: () => import('@/views/store/PosCheckout.vue'),
+        meta: { title: 'POS收银' },
+      },
     ],
   },
 ]

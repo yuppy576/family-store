@@ -49,6 +49,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { ElMessage } from 'element-plus'
 import { Message, Lock } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 
@@ -80,7 +81,8 @@ async function handleLogin() {
   try {
     await authStore.login(form.email, form.password)
   } catch (err: any) {
-    // error already handled by request interceptor
+    const msg = err?.response?.data?.messages?.[0] || '登录失败，请检查账号密码'
+    ElMessage.error(msg)
   } finally {
     loading.value = false
   }

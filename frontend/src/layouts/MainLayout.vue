@@ -77,6 +77,10 @@
                 <el-icon><Download /></el-icon>
                 <span>进货管理</span>
               </el-menu-item>
+              <el-menu-item index="/store/pos">
+                <el-icon><ShoppingCart /></el-icon>
+                <span>POS收银</span>
+              </el-menu-item>
             </el-sub-menu>
           </template>
         </el-menu>
