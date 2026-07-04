@@ -69,6 +69,10 @@
                 <el-icon><Box /></el-icon>
                 <span>商品管理</span>
               </el-menu-item>
+              <el-menu-item index="/store/suppliers">
+                <el-icon><User /></el-icon>
+                <span>供应商管理</span>
+              </el-menu-item>
             </el-sub-menu>
           </template>
         </el-menu>

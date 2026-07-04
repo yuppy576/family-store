@@ -120,6 +120,11 @@ func main() {
 	consignmentService := service.NewConsignmentService(consignmentRepo)
 	consignmentHandler := http.NewConsignmentHandler(consignmentService)
 
+	supplierRepo := repository.NewSupplierRepository(db)
+	supplierService := service.NewSupplierService(supplierRepo)
+	supplierHandler := http.NewSupplierHandler(supplierService)
+	purchaseHandler := http.NewPurchaseHandler(supplierService)
+
 	// Init router
 	router, err := http.NewRouter(
 		config.HTTP,
@@ -131,6 +136,8 @@ func main() {
 		*productHandler,
 		*orderHandler,
 		*consignmentHandler,
+		*supplierHandler,
+		*purchaseHandler,
 	)
 	if err != nil {
 		slog.Error("Error initializing router", "error", err)

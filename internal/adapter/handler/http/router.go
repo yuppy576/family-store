@@ -31,6 +31,8 @@ func NewRouter(
 	productHandler ProductHandler,
 	orderHandler OrderHandler,
 	consignmentHandler ConsignmentHandler,
+	supplierHandler SupplierHandler,
+	purchaseHandler PurchaseHandler,
 ) (*Router, error) {
 	// Disable debug mode in production
 	if config.Env == "production" {
@@ -150,6 +152,28 @@ func NewRouter(
 		ca.DELETE("/items/:id", consignmentHandler.DeleteConsignment)
 		ca.POST("/items/:id/settlements", consignmentHandler.CreateSettlement)
 		ca.POST("/vehicles/:id/progress", consignmentHandler.CreateTransferProgress)
+	}
+
+	// ── Store Routes ──────────────────────────────────────
+	supplier := v1.Group("/suppliers").Use(authMiddleware(token))
+	{
+		supplier.GET("/", supplierHandler.List)
+		supplier.GET("/:id", supplierHandler.Get)
+		sa := supplier.Use(adminMiddleware())
+		{
+			sa.POST("/", supplierHandler.Create)
+			sa.PUT("/:id", supplierHandler.Update)
+			sa.DELETE("/:id", supplierHandler.Delete)
+		}
+	}
+	purchase := v1.Group("/purchases").Use(authMiddleware(token))
+	{
+		purchase.GET("/", purchaseHandler.List)
+		purchase.GET("/:id", purchaseHandler.Get)
+		pa := purchase.Use(adminMiddleware())
+		{
+			pa.POST("/", purchaseHandler.Create)
+		}
 	}
 
 	return &Router{
