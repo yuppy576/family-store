@@ -122,46 +122,34 @@ func NewRouter(
 			order.POST("/", orderHandler.CreateOrder)
 			order.GET("/", orderHandler.ListOrders)
 			order.GET("/:id", orderHandler.GetOrder)
+		}
+	}
 
-		consignment := v1.Group("/consignment").Use(authMiddleware(token))
-		{
-			consignor := consignment.Group("/consignors")
-			{
-				consignor.GET("/", consignmentHandler.ListConsignors)
-				consignor.GET("/:id", consignmentHandler.GetConsignor)
-				ac := consignor.Use(adminMiddleware())
-				{
-					ac.POST("/", consignmentHandler.CreateConsignor)
-					ac.PUT("/:id", consignmentHandler.UpdateConsignor)
-					ac.DELETE("/:id", consignmentHandler.DeleteConsignor)
-				}
-			}
-			item := consignment.Group("/items")
-			{
-				item.GET("/", consignmentHandler.ListConsignments)
-				item.GET("/:id", consignmentHandler.GetConsignment)
-				ai := item.Use(adminMiddleware())
-				{
-					ai.POST("/", consignmentHandler.CreateConsignment)
-					ai.PUT("/:id", consignmentHandler.UpdateConsignment)
-					ai.DELETE("/:id", consignmentHandler.DeleteConsignment)
-				}
-				item.POST("/:consignment_id/vehicle", consignmentHandler.CreateVehicle)
-				item.GET("/:consignment_id/vehicle", consignmentHandler.GetVehicle)
-				item.PUT("/:consignment_id/vehicle", consignmentHandler.UpdateVehicle)
-				item.GET("/:consignment_id/settlements", consignmentHandler.ListSettlements)
-				ai.POST("/:consignment_id/settlements", consignmentHandler.CreateSettlement)
-			}
-			vehicle := consignment.Group("/vehicles")
-			{
-				vehicle.GET("/:vehicle_id/progress", consignmentHandler.ListTransferProgress)
-				av := vehicle.Use(adminMiddleware())
-				{
-					av.POST("/:vehicle_id/progress", consignmentHandler.CreateTransferProgress)
-				}
-			}
-		}
-		}
+	// ── Consignment Routes ──────────────────────────────────────
+	// Read routes (authenticated users)
+	consignment := v1.Group("/consignment").Use(authMiddleware(token))
+	{
+		consignment.GET("/consignors", consignmentHandler.ListConsignors)
+		consignment.GET("/consignors/:id", consignmentHandler.GetConsignor)
+		consignment.GET("/items", consignmentHandler.ListConsignments)
+		consignment.GET("/items/:id", consignmentHandler.GetConsignment)
+		consignment.POST("/items/:consignment_id/vehicle", consignmentHandler.CreateVehicle)
+		consignment.GET("/items/:consignment_id/vehicle", consignmentHandler.GetVehicle)
+		consignment.PUT("/items/:consignment_id/vehicle", consignmentHandler.UpdateVehicle)
+		consignment.GET("/items/:consignment_id/settlements", consignmentHandler.ListSettlements)
+		consignment.GET("/vehicles/:vehicle_id/progress", consignmentHandler.ListTransferProgress)
+	}
+	// Admin routes
+	ca := v1.Group("/consignment").Use(authMiddleware(token), adminMiddleware())
+	{
+		ca.POST("/consignors", consignmentHandler.CreateConsignor)
+		ca.PUT("/consignors/:id", consignmentHandler.UpdateConsignor)
+		ca.DELETE("/consignors/:id", consignmentHandler.DeleteConsignor)
+		ca.POST("/items", consignmentHandler.CreateConsignment)
+		ca.PUT("/items/:id", consignmentHandler.UpdateConsignment)
+		ca.DELETE("/items/:id", consignmentHandler.DeleteConsignment)
+		ca.POST("/items/:consignment_id/settlements", consignmentHandler.CreateSettlement)
+		ca.POST("/vehicles/:vehicle_id/progress", consignmentHandler.CreateTransferProgress)
 	}
 
 	return &Router{
