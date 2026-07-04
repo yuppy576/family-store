@@ -204,6 +204,27 @@ func (cr *ConsignmentRepository) ListConsignments(ctx context.Context, status st
 	}
 	return items, nil
 }
+func (cr *ConsignmentRepository) ListExpiringConsignments(ctx context.Context, withinDays int32) ([]domain.Consignment, error) {
+	rows, err := cr.db.Query(ctx,
+		"SELECT * FROM consignments WHERE status = $1 AND contract_end <= CURRENT_DATE + CAST($2 AS INTEGER) ORDER BY contract_end ASC",
+		"ON_SALE", withinDays)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []domain.Consignment
+	for rows.Next() {
+		var c domain.Consignment
+		if err := rows.Scan(&c.ID, &c.ConsignorID, &c.Name, &c.Description, &c.Images,
+			&c.Category, &c.ExpectedPrice, &c.RecommendedPrice, &c.FinalPrice,
+			&c.CommissionRate, &c.CommissionAmount, &c.Status,
+			&c.ContractEnd, &c.IsVehicle, &c.Memo, &c.CreatedAt, &c.UpdatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, c)
+	}
+	return items, nil
+}
 
 func (cr *ConsignmentRepository) UpdateConsignment(ctx context.Context, cons *domain.Consignment) (*domain.Consignment, error) {
 	query := cr.db.QueryBuilder.Update("consignments").

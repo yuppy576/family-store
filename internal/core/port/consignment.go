@@ -19,6 +19,7 @@ type ConsignmentRepository interface {
 	CreateConsignment(ctx context.Context, consignment *domain.Consignment) (*domain.Consignment, error)
 	GetConsignmentByID(ctx context.Context, id uint64) (*domain.Consignment, error)
 	ListConsignments(ctx context.Context, status string, skip, limit uint64) ([]domain.Consignment, error)
+	ListExpiringConsignments(ctx context.Context, withinDays int32) ([]domain.Consignment, error)
 	UpdateConsignment(ctx context.Context, consignment *domain.Consignment) (*domain.Consignment, error)
 	DeleteConsignment(ctx context.Context, id uint64) error
 
@@ -44,6 +45,7 @@ type ConsignmentService interface {
 	CreateConsignment(ctx context.Context, consignment *domain.Consignment) (*domain.Consignment, error)
 	GetConsignment(ctx context.Context, id uint64) (*domain.Consignment, error)
 	ListConsignments(ctx context.Context, status string, skip, limit uint64) ([]domain.Consignment, error)
+	ListExpiringConsignments(ctx context.Context, withinDays int32) ([]domain.Consignment, error)
 	UpdateConsignment(ctx context.Context, consignment *domain.Consignment) (*domain.Consignment, error)
 	DeleteConsignment(ctx context.Context, id uint64) error
 

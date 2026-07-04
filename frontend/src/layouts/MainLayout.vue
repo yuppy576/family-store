@@ -18,6 +18,18 @@
       </div>
     </header>
 
+    <!-- 到期提醒 -->
+    <div v-if="expiringItems.length>0" class="expiring-banner">
+      <el-alert :title="`${expiringItems.length} 件寄卖品即将到期`" type="warning" show-icon :closable="false">
+        <template #default>
+          <div v-for="item in expiringItems.slice(0,5)" :key="item.id" style="font-size:13px;margin:2px 0">
+            · {{ item.name }}（到期：{{ formatDate(item.contract_end) }}）
+          </div>
+          <div v-if="expiringItems.length>5" style="font-size:12px;color:#909399">还有 {{ expiringItems.length-5 }} 件...</div>
+        </template>
+      </el-alert>
+    </div>
+
     <div class="layout-body">
       <!-- 遮罩层（手机端菜单打开时） -->
       <div v-if="menuOpen" class="menu-overlay" @click="menuOpen=false" />
@@ -55,16 +67,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import request from '@/api/request'
 import { Menu, List, User, Goods, Shop, Box, ShoppingCart, Money, Guide, Download } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const menuOpen = ref(false)
+const expiringItems = ref<any[]>([])
+function formatDate(d:string) { return d?d.substring(0,10):'-' }
+async function loadExpiring() {
+  try {
+    const res = await request.get('/consignment/expiring')
+    const body = res.data
+    expiringItems.value = body.success ? (body.data||[]) : []
+  } catch { expiringItems.value = [] }
+}
 function onMenuSelect() { menuOpen.value = false }
+onMounted(loadExpiring)
 
 const activeMenu = computed(() => route.path)
 
@@ -101,6 +124,7 @@ function handleLogout() {
 
 /* 遮罩层 */
 .menu-overlay { display:none; }
+.expiring-banner { padding:0 16px; background:#fdf6ec; border-bottom:1px solid #faecd8; }
 
 /* 侧边栏 */
 .layout-sidebar { width:220px; background:#fff; border-right:1px solid #e4e7ed; overflow-y:auto; flex-shrink:0; transition:transform .25s; }

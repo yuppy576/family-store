@@ -142,6 +142,7 @@ func NewRouter(
 		consignment.PUT("/items/:id/vehicle", consignmentHandler.UpdateVehicle)
 		consignment.GET("/items/:id/settlements", consignmentHandler.ListSettlements)
 		consignment.GET("/vehicles/:id/progress", consignmentHandler.ListTransferProgress)
+		consignment.GET("/expiring", consignmentHandler.ListExpiring)
 	}
 	// Admin routes
 	ca := v1.Group("/consignment").Use(authMiddleware(token), adminMiddleware())

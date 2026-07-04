@@ -213,6 +213,14 @@ func (h *ConsignmentHandler) ListConsignments(ctx *gin.Context) {
 	rsp := toMap(meta, items, "consignments")
 	handleSuccess(ctx, rsp)
 }
+func (h *ConsignmentHandler) ListExpiring(ctx *gin.Context) {
+	items, err := h.svc.ListExpiringConsignments(ctx, 7)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
+	handleSuccess(ctx, items)
+}
 
 func (h *ConsignmentHandler) UpdateConsignment(ctx *gin.Context) {
 	var reqID idRequest

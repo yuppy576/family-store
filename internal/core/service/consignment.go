@@ -64,6 +64,9 @@ func (cs *ConsignmentService) ListConsignments(ctx context.Context, status strin
 	return cs.repo.ListConsignments(ctx, status, skip, limit)
 }
 
+func (cs *ConsignmentService) ListExpiringConsignments(ctx context.Context, withinDays int32) ([]domain.Consignment, error) {
+	return cs.repo.ListExpiringConsignments(ctx, withinDays)
+}
 func (cs *ConsignmentService) UpdateConsignment(ctx context.Context, consignment *domain.Consignment) (*domain.Consignment, error) {
 	consignment.UpdatedAt = time.Now()
 	return cs.repo.UpdateConsignment(ctx, consignment)
