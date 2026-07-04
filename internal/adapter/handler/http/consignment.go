@@ -259,7 +259,7 @@ func (h *ConsignmentHandler) CreateVehicle(ctx *gin.Context) {
 		validationError(ctx, err)
 		return
 	}
-	consignmentID, _ := stringToUint64(ctx.Param("consignment_id"))
+	consignmentID, _ := stringToUint64(ctx.Param("id"))
 
 	result, err := h.svc.CreateVehicle(ctx, &domain.ConsignmentVehicle{
 		ConsignmentID: consignmentID, VIN: req.VIN, PlateNumber: req.PlateNumber,
@@ -274,7 +274,7 @@ func (h *ConsignmentHandler) CreateVehicle(ctx *gin.Context) {
 }
 
 func (h *ConsignmentHandler) GetVehicle(ctx *gin.Context) {
-	consignmentID, _ := stringToUint64(ctx.Param("consignment_id"))
+	consignmentID, _ := stringToUint64(ctx.Param("id"))
 	result, err := h.svc.GetVehicle(ctx, consignmentID)
 	if err != nil {
 		handleError(ctx, err)
@@ -289,7 +289,7 @@ func (h *ConsignmentHandler) UpdateVehicle(ctx *gin.Context) {
 		validationError(ctx, err)
 		return
 	}
-	consignmentID, _ := stringToUint64(ctx.Param("consignment_id"))
+	consignmentID, _ := stringToUint64(ctx.Param("id"))
 
 	result, err := h.svc.UpdateVehicle(ctx, &domain.ConsignmentVehicle{
 		ConsignmentID: consignmentID, VIN: req.VIN, PlateNumber: req.PlateNumber,
@@ -311,7 +311,7 @@ func (h *ConsignmentHandler) CreateTransferProgress(ctx *gin.Context) {
 		validationError(ctx, err)
 		return
 	}
-	vehicleID, _ := stringToUint64(ctx.Param("vehicle_id"))
+	vehicleID, _ := stringToUint64(ctx.Param("id"))
 
 	result, err := h.svc.CreateTransferProgress(ctx, &domain.TransferProgress{
 		VehicleID: vehicleID, Status: domain.TransferStatus(req.Status),
@@ -325,7 +325,7 @@ func (h *ConsignmentHandler) CreateTransferProgress(ctx *gin.Context) {
 }
 
 func (h *ConsignmentHandler) ListTransferProgress(ctx *gin.Context) {
-	vehicleID, _ := stringToUint64(ctx.Param("vehicle_id"))
+	vehicleID, _ := stringToUint64(ctx.Param("id"))
 	result, err := h.svc.ListTransferProgress(ctx, vehicleID)
 	if err != nil {
 		handleError(ctx, err)
@@ -342,7 +342,7 @@ func (h *ConsignmentHandler) CreateSettlement(ctx *gin.Context) {
 		validationError(ctx, err)
 		return
 	}
-	consignmentID, _ := stringToUint64(ctx.Param("consignment_id"))
+	consignmentID, _ := stringToUint64(ctx.Param("id"))
 
 	result, err := h.svc.CreateSettlement(ctx, &domain.ConsignmentSettlement{
 		ConsignmentID: consignmentID, Type: domain.SettlementType(req.Type),
@@ -357,7 +357,7 @@ func (h *ConsignmentHandler) CreateSettlement(ctx *gin.Context) {
 }
 
 func (h *ConsignmentHandler) ListSettlements(ctx *gin.Context) {
-	consignmentID, _ := stringToUint64(ctx.Param("consignment_id"))
+	consignmentID, _ := stringToUint64(ctx.Param("id"))
 	result, err := h.svc.ListSettlements(ctx, consignmentID)
 	if err != nil {
 		handleError(ctx, err)

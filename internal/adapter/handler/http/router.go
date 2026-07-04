@@ -133,11 +133,11 @@ func NewRouter(
 		consignment.GET("/consignors/:id", consignmentHandler.GetConsignor)
 		consignment.GET("/items", consignmentHandler.ListConsignments)
 		consignment.GET("/items/:id", consignmentHandler.GetConsignment)
-		consignment.POST("/items/:consignment_id/vehicle", consignmentHandler.CreateVehicle)
-		consignment.GET("/items/:consignment_id/vehicle", consignmentHandler.GetVehicle)
-		consignment.PUT("/items/:consignment_id/vehicle", consignmentHandler.UpdateVehicle)
-		consignment.GET("/items/:consignment_id/settlements", consignmentHandler.ListSettlements)
-		consignment.GET("/vehicles/:vehicle_id/progress", consignmentHandler.ListTransferProgress)
+		consignment.POST("/items/:id/vehicle", consignmentHandler.CreateVehicle)
+		consignment.GET("/items/:id/vehicle", consignmentHandler.GetVehicle)
+		consignment.PUT("/items/:id/vehicle", consignmentHandler.UpdateVehicle)
+		consignment.GET("/items/:id/settlements", consignmentHandler.ListSettlements)
+		consignment.GET("/vehicles/:id/progress", consignmentHandler.ListTransferProgress)
 	}
 	// Admin routes
 	ca := v1.Group("/consignment").Use(authMiddleware(token), adminMiddleware())
@@ -148,8 +148,8 @@ func NewRouter(
 		ca.POST("/items", consignmentHandler.CreateConsignment)
 		ca.PUT("/items/:id", consignmentHandler.UpdateConsignment)
 		ca.DELETE("/items/:id", consignmentHandler.DeleteConsignment)
-		ca.POST("/items/:consignment_id/settlements", consignmentHandler.CreateSettlement)
-		ca.POST("/vehicles/:vehicle_id/progress", consignmentHandler.CreateTransferProgress)
+		ca.POST("/items/:id/settlements", consignmentHandler.CreateSettlement)
+		ca.POST("/vehicles/:id/progress", consignmentHandler.CreateTransferProgress)
 	}
 
 	return &Router{
