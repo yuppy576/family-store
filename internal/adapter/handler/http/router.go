@@ -170,6 +170,7 @@ func NewRouter(
 	{
 		purchase.GET("/", purchaseHandler.List)
 		purchase.GET("/:id", purchaseHandler.Get)
+		purchase.GET("/:id/items", purchaseHandler.ListItems)
 		pa := purchase.Use(adminMiddleware())
 		{
 			pa.POST("/", purchaseHandler.Create)

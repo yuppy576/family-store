@@ -31,4 +31,5 @@ type SupplierService interface {
 	CreatePurchase(ctx context.Context, p *domain.Purchase, items []domain.PurchaseItem) (*domain.Purchase, error)
 	GetPurchase(ctx context.Context, id uint64) (*domain.Purchase, error)
 	ListPurchases(ctx context.Context, skip, limit uint64) ([]domain.Purchase, error)
+	ListPurchaseItems(ctx context.Context, purchaseID uint64) ([]domain.PurchaseItem, error)
 }

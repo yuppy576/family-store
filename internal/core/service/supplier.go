@@ -67,3 +67,7 @@ func (s *SupplierService) GetPurchase(ctx context.Context, id uint64) (*domain.P
 func (s *SupplierService) ListPurchases(ctx context.Context, skip, limit uint64) ([]domain.Purchase, error) {
 	return s.repo.ListPurchases(ctx, skip, limit)
 }
+
+func (s *SupplierService) ListPurchaseItems(ctx context.Context, purchaseID uint64) ([]domain.PurchaseItem, error) {
+	return s.repo.ListPurchaseItems(ctx, purchaseID)
+}

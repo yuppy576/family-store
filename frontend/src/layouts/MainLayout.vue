@@ -73,6 +73,10 @@
                 <el-icon><User /></el-icon>
                 <span>供应商管理</span>
               </el-menu-item>
+              <el-menu-item index="/store/purchases">
+                <el-icon><Download /></el-icon>
+                <span>进货管理</span>
+              </el-menu-item>
             </el-sub-menu>
           </template>
         </el-menu>

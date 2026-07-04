@@ -54,6 +54,14 @@ func (h *PurchaseHandler) Get(ctx *gin.Context) {
 	handleSuccess(ctx, r)
 }
 
+func (h *PurchaseHandler) ListItems(ctx *gin.Context) {
+	var req idRequest
+	if err := ctx.ShouldBindUri(&req); err != nil { validationError(ctx, err); return }
+	items, err := h.svc.ListPurchaseItems(ctx, req.ID)
+	if err != nil { handleError(ctx, err); return }
+	handleSuccess(ctx, items)
+}
+
 func (h *PurchaseHandler) List(ctx *gin.Context) {
 	skip, _ := stringToUint64(ctx.DefaultQuery("skip", "0"))
 	limit, _ := stringToUint64(ctx.DefaultQuery("limit", "20"))
