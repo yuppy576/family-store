@@ -186,6 +186,62 @@
         <el-form-item label="是否车辆">
           <el-switch v-model="form.isVehicle" />
         </el-form-item>
+        <template v-if="form.isVehicle">
+          <el-divider content-position="left">车辆信息</el-divider>
+          <el-row :gutter="16">
+            <el-col :span="12">
+              <el-form-item label="品牌" prop="vehicleBrand">
+                <el-input v-model="form.vehicleBrand" placeholder="丰田/本田/宝马..." />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="型号" prop="vehicleModel">
+                <el-input v-model="form.vehicleModel" placeholder="凯美瑞/雅阁/X5..." />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="16">
+            <el-col :span="12">
+              <el-form-item label="车牌号">
+                <el-input v-model="form.vehiclePlate" placeholder="粤B12345" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="车架号(VIN)">
+                <el-input v-model="form.vehicleVin" placeholder="17位车架号" maxlength="17" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="16">
+            <el-col :span="8">
+              <el-form-item label="年份">
+                <el-input-number v-model="form.vehicleYear" :min="2000" :max="2030" style="width:100%" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="里程(km)">
+                <el-input-number v-model="form.vehicleMileage" :min="0" :step="1000" style="width:100%" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="颜色">
+                <el-input v-model="form.vehicleColor" placeholder="黑色/白色..." />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="16">
+            <el-col :span="12">
+              <el-form-item label="年检到期">
+                <el-date-picker v-model="form.vehicleInspection" type="date" placeholder="选择日期" style="width:100%" value-format="YYYY-MM-DD" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="保险到期">
+                <el-date-picker v-model="form.vehicleInsurance" type="date" placeholder="选择日期" style="width:100%" value-format="YYYY-MM-DD" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </template>
         <el-form-item label="期望价格">
           <el-input-number
             v-model="form.expectedPrice"
@@ -235,6 +291,9 @@ import {
   updateConsignment,
   deleteConsignment,
   loadAllConsignors,
+  createVehicle,
+  updateVehicle,
+  getVehicle,
 } from '@/api/consignment'
 import type { ConsignmentData } from '@/api/consignment'
 
@@ -296,15 +355,13 @@ const filterForm = reactive({
   keyword: '',
 })
 
-const defaultForm = (): ConsignmentData => ({
-  itemName: '',
-  description: '',
-  consignorId: 0,
-  expectedPrice: undefined,
-  commission: undefined,
-  status: 'ON_SALE',
-  isVehicle: false,
-  remark: '',
+const defaultForm = (): any => ({
+  itemName: '', description: '', consignorId: 0,
+  expectedPrice: undefined, commission: undefined,
+  status: 'ON_SALE', isVehicle: false, remark: '',
+  vehicleBrand: '', vehicleModel: '', vehiclePlate: '', vehicleVin: '',
+  vehicleYear: 0, vehicleMileage: 0, vehicleColor: '',
+  vehicleInspection: '', vehicleInsurance: '',
 })
 
 const form = reactive<ConsignmentData>(defaultForm())
@@ -431,8 +488,28 @@ function openEditDialog(row: ConsignmentRecord) {
   form.expectedPrice = row.expected_price ?? row.expectedPrice
   form.commission = row.commission_rate ?? row.commission
   form.status = row.status || 'ON_SALE'
-  form.isVehicle = !!row.is_vehicle ?? !!row.isVehicle
+  form.isVehicle = !!(row.is_vehicle ?? row.isVehicle)
   form.remark = row.memo || row.remark || ''
+  form.vehicleBrand = ''; form.vehicleModel = ''; form.vehiclePlate = ''; form.vehicleVin = ''
+  form.vehicleYear = 0; form.vehicleMileage = 0; form.vehicleColor = ''
+  form.vehicleInspection = ''; form.vehicleInsurance = ''
+  // 如果是车辆，异步加载车辆信息
+  if (form.isVehicle && row.id) {
+    getVehicle(row.id).then((res: any) => {
+      const v = res.data?.data || res.data
+      if (v && v.id) {
+        form.vehicleBrand = v.brand || ''
+        form.vehicleModel = v.model || ''
+        form.vehiclePlate = v.plate_number || ''
+        form.vehicleVin = v.vin || ''
+        form.vehicleYear = v.year || 0
+        form.vehicleMileage = v.mileage || 0
+        form.vehicleColor = v.color || ''
+        form.vehicleInspection = v.inspection_expire || ''
+        form.vehicleInsurance = v.insurance_expire || ''
+      }
+    }).catch(() => {})
+  }
   dialogVisible.value = true
 }
 
@@ -451,12 +528,37 @@ async function handleSave() {
       memo: form.remark,
       is_vehicle: form.isVehicle,
     }
-    if (isEditing.value && editingId.value) {
-      await updateConsignment(editingId.value, payload)
+    let itemId = editingId.value
+    if (isEditing.value && itemId) {
+      await updateConsignment(itemId, payload)
       ElMessage.success('更新成功')
     } else {
-      await createConsignment(payload)
+      const res = await createConsignment(payload)
+      const body = res.data
+      itemId = body.data?.id || (body.success && body.data?.id)
       ElMessage.success('创建成功')
+    }
+    // 如果是车辆，同步创建/更新车辆信息
+    if (form.isVehicle && itemId) {
+      const vPayload: any = {
+        brand: form.vehicleBrand, model: form.vehicleModel,
+        plate_number: form.vehiclePlate, vin: form.vehicleVin,
+        year: form.vehicleYear || undefined,
+        mileage: form.vehicleMileage || undefined,
+        color: form.vehicleColor,
+        inspection_expire: form.vehicleInspection || undefined,
+        insurance_expire: form.vehicleInsurance || undefined,
+      }
+      try {
+        const existing = await getVehicle(itemId)
+        if (existing.data?.data?.id) {
+          await updateVehicle(itemId, vPayload)
+        } else {
+          await createVehicle(itemId, vPayload)
+        }
+      } catch {
+        await createVehicle(itemId, vPayload)
+      }
     }
     dialogVisible.value = false
     loadData()
