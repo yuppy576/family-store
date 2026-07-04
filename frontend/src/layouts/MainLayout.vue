@@ -49,6 +49,10 @@
                 <el-icon><Goods /></el-icon>
                 <span>寄卖品管理</span>
               </el-menu-item>
+              <el-menu-item index="/consignment/settlements">
+                <el-icon><Money /></el-icon>
+                <span>结算管理</span>
+              </el-menu-item>
             </el-sub-menu>
           </template>
           <template v-if="currentMode === 'store'">

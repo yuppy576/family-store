@@ -6,7 +6,6 @@
         <el-form-item label="状态">
           <el-select v-model="filterForm.status" placeholder="全部状态" clearable style="width: 140px">
             <el-option label="在售" value="ON_SALE" />
-            <el-option label="已售" value="SOLD" />
             <el-option label="已售出" value="SOLD" />
             <el-option label="已过期" value="EXPIRED" />
             <el-option label="已取回" value="RETURNED" />
@@ -111,6 +110,9 @@
           <template #default="{ row }">
             <el-button size="small" type="primary" link @click="openEditDialog(row)">
               编辑
+            </el-button>
+            <el-button size="small" type="success" link @click="goSettlement(row)">
+              结算
             </el-button>
             <el-popconfirm
               title="确定要删除此寄卖品吗？"
@@ -220,6 +222,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -276,6 +279,11 @@ const saving = ref(false)
 const editingId = ref<number | null>(null)
 const formRef = ref<FormInstance>()
 const consignorOptions = ref<ConsignorOption[]>([])
+
+const router = useRouter()
+function goSettlement(row: any) {
+  router.push({ path: '/consignment/settlements', query: { id: row.id } })
+}
 
 const filterForm = reactive({
   status: '',
