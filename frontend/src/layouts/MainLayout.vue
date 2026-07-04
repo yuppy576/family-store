@@ -3,91 +3,51 @@
     <!-- Header -->
     <header class="layout-header">
       <div class="header-left">
-        <span class="app-title">家族门店管理系统</span>
+        <el-button class="menu-toggle" @click="menuOpen=!menuOpen">
+          <el-icon><Menu /></el-icon>
+        </el-button>
+        <span class="app-title">家族门店</span>
         <el-button-group class="mode-switcher">
-          <el-button
-            :type="currentMode === 'store' ? 'primary' : 'default'"
-            size="small"
-            @click="switchMode('store')"
-          >
-            商店
-          </el-button>
-          <el-button
-            :type="currentMode === 'consignment' ? 'primary' : 'default'"
-            size="small"
-            @click="switchMode('consignment')"
-          >
-            寄卖
-          </el-button>
+          <el-button :type="currentMode==='store'?'primary':'default'" size="small" @click="switchMode('store')">商店</el-button>
+          <el-button :type="currentMode==='consignment'?'primary':'default'" size="small" @click="switchMode('consignment')">寄卖</el-button>
         </el-button-group>
       </div>
       <div class="header-right">
-        <span class="user-name">{{ authStore.user?.name || authStore.user?.email }}</span>
+        <span class="user-name">{{ authStore.user?.name||authStore.user?.email }}</span>
         <el-button type="danger" size="small" plain @click="handleLogout">退出</el-button>
       </div>
     </header>
 
     <div class="layout-body">
+      <!-- 遮罩层（手机端菜单打开时） -->
+      <div v-if="menuOpen" class="menu-overlay" @click="menuOpen=false" />
+
       <!-- Sidebar -->
-      <aside class="layout-sidebar">
-        <el-menu
-          :default-active="activeMenu"
-          router
-          :collapse="false"
-        >
-          <template v-if="currentMode === 'consignment'">
+      <aside class="layout-sidebar" :class="{ 'sidebar-open': menuOpen }">
+        <el-menu :default-active="activeMenu" router @select="onMenuSelect">
+          <template v-if="currentMode==='consignment'">
             <el-sub-menu index="consignment">
-              <template #title>
-                <el-icon><List /></el-icon>
-                <span>寄卖管理</span>
-              </template>
-              <el-menu-item index="/consignment/consignors">
-                <el-icon><User /></el-icon>
-                <span>寄卖人管理</span>
-              </el-menu-item>
-              <el-menu-item index="/consignment/items">
-                <el-icon><Goods /></el-icon>
-                <span>寄卖品管理</span>
-              </el-menu-item>
-              <el-menu-item index="/consignment/settlements">
-                <el-icon><Money /></el-icon>
-                <span>结算管理</span>
-              </el-menu-item>
-              <el-menu-item index="/consignment/transfer">
-                <el-icon><Guide /></el-icon>
-                <span>过户进度</span>
-              </el-menu-item>
+              <template #title><el-icon><List /></el-icon><span>寄卖管理</span></template>
+              <el-menu-item index="/consignment/consignors"><el-icon><User /></el-icon><span>寄卖人管理</span></el-menu-item>
+              <el-menu-item index="/consignment/items"><el-icon><Goods /></el-icon><span>寄卖品管理</span></el-menu-item>
+              <el-menu-item index="/consignment/settlements"><el-icon><Money /></el-icon><span>结算管理</span></el-menu-item>
+              <el-menu-item index="/consignment/transfer"><el-icon><Guide /></el-icon><span>过户进度</span></el-menu-item>
             </el-sub-menu>
           </template>
-          <template v-if="currentMode === 'store'">
+          <template v-if="currentMode==='store'">
             <el-sub-menu index="store">
-              <template #title>
-                <el-icon><Shop /></el-icon>
-                <span>商店管理</span>
-              </template>
-              <el-menu-item index="/store/products">
-                <el-icon><Box /></el-icon>
-                <span>商品管理</span>
-              </el-menu-item>
-              <el-menu-item index="/store/suppliers">
-                <el-icon><User /></el-icon>
-                <span>供应商管理</span>
-              </el-menu-item>
-              <el-menu-item index="/store/purchases">
-                <el-icon><Download /></el-icon>
-                <span>进货管理</span>
-              </el-menu-item>
-              <el-menu-item index="/store/pos">
-                <el-icon><ShoppingCart /></el-icon>
-                <span>POS收银</span>
-              </el-menu-item>
+              <template #title><el-icon><Shop /></el-icon><span>商店管理</span></template>
+              <el-menu-item index="/store/products"><el-icon><Box /></el-icon><span>商品管理</span></el-menu-item>
+              <el-menu-item index="/store/suppliers"><el-icon><User /></el-icon><span>供应商管理</span></el-menu-item>
+              <el-menu-item index="/store/purchases"><el-icon><Download /></el-icon><span>进货管理</span></el-menu-item>
+              <el-menu-item index="/store/pos"><el-icon><ShoppingCart /></el-icon><span>POS收银</span></el-menu-item>
             </el-sub-menu>
           </template>
         </el-menu>
       </aside>
 
       <!-- Main Content -->
-      <main class="layout-main">
+      <main class="layout-main" @click="menuOpen=false">
         <router-view />
       </main>
     </div>
@@ -95,14 +55,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { List, User, Goods, Shop, Box } from '@element-plus/icons-vue'
+import { Menu, List, User, Goods, Shop, Box, ShoppingCart, Money, Guide, Download } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const menuOpen = ref(false)
+function onMenuSelect() { menuOpen.value = false }
 
 const activeMenu = computed(() => route.path)
 
@@ -125,74 +87,37 @@ function handleLogout() {
 </script>
 
 <style scoped>
-.main-layout {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
+.main-layout { display:flex; flex-direction:column; height:100vh; }
+.layout-header { display:flex; justify-content:space-between; align-items:center; height:56px; padding:0 16px; background:#fff; border-bottom:1px solid #e4e7ed; z-index:100; }
+.header-left { display:flex; align-items:center; gap:12px; }
+.app-title { font-size:18px; font-weight:600; color:#303133; white-space:nowrap; }
+.mode-switcher { flex-shrink:0; }
+.header-right { display:flex; align-items:center; gap:8px; }
+.user-name { font-size:14px; color:#606266; display:none; }
+.layout-body { display:flex; flex:1; overflow:hidden; position:relative; }
 
-.layout-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 56px;
-  padding: 0 20px;
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  z-index: 100;
-}
+/* 手机菜单按钮 */
+.menu-toggle { display:flex !important; }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
+/* 遮罩层 */
+.menu-overlay { display:none; }
 
-.app-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-  white-space: nowrap;
-}
+/* 侧边栏 */
+.layout-sidebar { width:220px; background:#fff; border-right:1px solid #e4e7ed; overflow-y:auto; flex-shrink:0; transition:transform .25s; }
+.layout-sidebar .el-menu { border-right:none; }
+.layout-main { flex:1; padding:16px; background:#f5f7fa; overflow-y:auto; }
 
-.mode-switcher {
-  flex-shrink: 0;
+/* 手机端适配 */
+@media (max-width:768px) {
+  .user-name { display:none; }
+  .app-title { font-size:15px; }
+  .layout-sidebar { position:fixed; top:56px; left:0; bottom:0; z-index:200; transform:translateX(-100%); }
+  .layout-sidebar.sidebar-open { transform:translateX(0); }
+  .menu-overlay { display:block; position:fixed; top:56px; left:0; right:0; bottom:0; background:rgba(0,0,0,.3); z-index:199; }
+  .layout-main { padding:10px; }
 }
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.user-name {
-  font-size: 14px;
-  color: #606266;
-}
-
-.layout-body {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-.layout-sidebar {
-  width: 220px;
-  background: #fff;
-  border-right: 1px solid #e4e7ed;
-  overflow-y: auto;
-  flex-shrink: 0;
-}
-
-.layout-sidebar .el-menu {
-  border-right: none;
-}
-
-.layout-main {
-  flex: 1;
-  padding: 20px;
-  background: #f5f7fa;
-  overflow-y: auto;
+@media (min-width:769px) {
+  .menu-toggle { display:none !important; }
+  .user-name { display:inline; }
 }
 </style>

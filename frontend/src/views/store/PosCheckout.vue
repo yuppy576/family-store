@@ -2,25 +2,25 @@
   <div class="pos-container">
     <el-row :gutter="16">
       <!-- 左侧：商品列表 -->
-      <el-col :span="14">
+      <el-col :xs="24" :sm="24" :md="14">
         <el-card shadow="never" class="mb-2">
           <el-row :gutter="8">
-            <el-col :span="8">
+            <el-col :xs="6" :sm="8" :md="8">
               <el-select v-model="categoryFilter" filterable clearable placeholder="全部分类" style="width:100%" @change="loadProducts">
                 <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
               </el-select>
             </el-col>
-            <el-col :span="10">
+            <el-col :xs="14" :sm="10" :md="10">
               <el-input v-model="searchText" placeholder="搜索商品名称/条码" clearable @keyup.enter="loadProducts" />
             </el-col>
-            <el-col :span="6">
+            <el-col :xs="4" :sm="6" :md="6">
               <el-button type="primary" @click="loadProducts" style="width:100%">搜索</el-button>
             </el-col>
           </el-row>
         </el-card>
         <el-card shadow="never" style="height:calc(100vh - 280px);overflow-y:auto">
           <el-row :gutter="12">
-            <el-col :span="8" v-for="p in products" :key="p.id" class="mb-2">
+            <el-col :xs="12" :sm="8" :md="8" v-for="p in products" :key="p.id" class="mb-2">
               <el-card shadow="hover" class="product-card" @click="addToCart(p)">
                 <div style="font-size:13px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.name }}</div>
                 <div style="color:#e6a23c;font-size:16px;font-weight:700">¥{{ Number(p.price).toFixed(2) }}<span style="font-size:11px;color:#909399">/{{ p.base_unit||p.unit||'个' }}</span></div>
@@ -33,8 +33,8 @@
       </el-col>
 
       <!-- 右侧：购物车 -->
-      <el-col :span="10">
-        <el-card shadow="never" style="height:calc(100vh - 240px);display:flex;flex-direction:column">
+      <el-col :xs="24" :sm="24" :md="10">
+        <el-card shadow="never" class="pos-cart" style="display:flex;flex-direction:column">
           <template #header><strong>购物车 ({{ cart.length }})</strong></template>
           <div style="flex:1;overflow-y:auto">
             <div v-for="(item,idx) in cart" :key="idx" class="cart-item">
@@ -121,6 +121,11 @@ onMounted(()=>{loadProducts();loadCategories();loadPayments()})
 </script>
 <style scoped>
 .pos-container{padding:0;background:#f5f5f7;height:calc(100vh - 120px)}
+@media(max-width:768px){
+  .pos-container{height:auto}
+  .pos-cart{margin-top:10px}
+  .pos-cart{max-height:400px}
+}
 .mb-2{margin-bottom:8px}
 .product-card{cursor:pointer;transition:all .2s;user-select:none}
 .product-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
