@@ -23,8 +23,8 @@
             <el-col :span="8" v-for="p in products" :key="p.id" class="mb-2">
               <el-card shadow="hover" class="product-card" @click="addToCart(p)">
                 <div style="font-size:13px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.name }}</div>
-                <div style="color:#e6a23c;font-size:16px;font-weight:700">¥{{ Number(p.price).toFixed(2) }}</div>
-                <div style="color:#909399;font-size:11px">库存: {{ p.stock }}</div>
+                <div style="color:#e6a23c;font-size:16px;font-weight:700">¥{{ Number(p.price).toFixed(2) }}<span style="font-size:11px;color:#909399">/{{ p.base_unit||p.unit||'个' }}</span></div>
+                <div style="color:#909399;font-size:11px">库存: {{ p.stock }}{{ p.unit||'' }}{{ p.base_unit?`(${p.stock*p.conversion_rate}${p.base_unit})`:'' }}</div>
               </el-card>
             </el-col>
           </el-row>
@@ -42,6 +42,7 @@
                 <div class="cart-item-name">{{ item.name }}</div>
                 <div class="cart-item-price">¥{{ (item.price * item.qty).toFixed(2) }}</div>
               </div>
+              <div style="font-size:11px;color:#909399;margin-bottom:4px">{{ item.qty }}{{ item.base_unit||item.unit||'个' }}</div>
               <div class="cart-item-actions">
                 <el-button type="danger" link size="small" @click="item.qty>1?item.qty--:removeItem(idx)">−</el-button>
                 <span class="cart-qty">{{ item.qty }}</span>
@@ -94,11 +95,11 @@ async function loadCategories(){
   try{const res=await request.get('/categories',{params:{skip:1,limit:99}});const d=res.data;categories.value=(d.success?d.data:d).categories||[]}catch{}
 }
 async function loadPayments(){
-  try{const res=await request.get('/payments');const d=res.data;payments.value=(d.success?d.data:d).payments||[];if(payments.value.length)paymentId.value=payments.value[0].id}catch{}
+  try{const res=await request.get('/payments',{params:{skip:1,limit:99}});const d=res.data;const b=d.success?d.data:d;payments.value=b.payments||b.list||[];if(payments.value.length)paymentId.value=payments.value[0].id}catch{}
 }
 function addToCart(p:any){
   const exist=cart.value.find(i=>i.id===p.id)
-  if(exist){exist.qty++}else{cart.value.push({id:p.id,name:p.name,price:p.price,qty:1})}
+  if(exist){exist.qty++}else{cart.value.push({id:p.id,name:p.name,price:p.price,qty:1,unit:p.unit,base_unit:p.base_unit})}
 }
 function removeItem(idx:number){cart.value.splice(idx,1)}
 async function submitOrder(){
@@ -107,8 +108,9 @@ async function submitOrder(){
   try{
     const res=await request.post('/orders',{
       payment_id:paymentId.value,
-      products:cart.value.map(i=>({id:i.id,quantity:i.qty})),
-      customer_name:'散客'
+      total_paid:totalAmount.value,
+      customer_name:'散客',
+      products:cart.value.map(i=>({product_id:i.id,qty:i.qty}))
     })
     ElMessage.success(`收款成功！¥${totalAmount.value.toFixed(2)}`)
     cart.value=[]

@@ -119,11 +119,13 @@ func NewRouter(
 				admin.DELETE("/:id", productHandler.DeleteProduct)
 			}
 		}
-		order := v1.Group("/orders").Use(authMiddleware(token))
+		og := v1.Group("/orders").Use(authMiddleware(token))
 		{
-			order.POST("/", orderHandler.CreateOrder)
-			order.GET("/", orderHandler.ListOrders)
-			order.GET("/:id", orderHandler.GetOrder)
+			og.POST("/", orderHandler.CreateOrder)
+			og.POST("", orderHandler.CreateOrder)
+			og.GET("/", orderHandler.ListOrders)
+			og.GET("", orderHandler.ListOrders)
+			og.GET("/:id", orderHandler.GetOrder)
 		}
 	}
 
