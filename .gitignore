@@ -19,3 +19,4 @@ log/
 *.test
 *.out
 coverage*
+family-store-server
