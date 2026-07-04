@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/bagashiz/go-pos/internal/adapter/storage/postgres"
