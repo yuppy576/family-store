@@ -53,6 +53,10 @@
                 <el-icon><Money /></el-icon>
                 <span>结算管理</span>
               </el-menu-item>
+              <el-menu-item index="/consignment/transfer">
+                <el-icon><Guide /></el-icon>
+                <span>过户进度</span>
+              </el-menu-item>
             </el-sub-menu>
           </template>
           <template v-if="currentMode === 'store'">

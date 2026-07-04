@@ -114,6 +114,9 @@
             <el-button size="small" type="success" link @click="goSettlement(row)">
               结算
             </el-button>
+            <el-button v-if="row.is_vehicle || row.isVehicle" size="small" type="warning" link @click="goTransfer(row)">
+              过户
+            </el-button>
             <el-popconfirm
               title="确定要删除此寄卖品吗？"
               @confirm="handleDelete(row.id)"
@@ -283,6 +286,9 @@ const consignorOptions = ref<ConsignorOption[]>([])
 const router = useRouter()
 function goSettlement(row: any) {
   router.push({ path: '/consignment/settlements', query: { id: row.id } })
+}
+function goTransfer(row: any) {
+  router.push({ path: '/consignment/transfer', query: { id: row.id } })
 }
 
 const filterForm = reactive({
