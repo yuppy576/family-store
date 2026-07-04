@@ -14,8 +14,11 @@ type Product struct {
 	Name       string
 	Stock      int64
 	Price      float64
-	Image      string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	Category   *Category
+	Image          string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Unit           string
+	BaseUnit       string
+	ConversionRate int32
+	Category       *Category
 }

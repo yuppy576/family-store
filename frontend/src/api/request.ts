@@ -32,7 +32,7 @@ request.interceptors.response.use(
           localStorage.removeItem('user')
           if (!window.location.pathname.includes('/login')) {
             ElMessage.error('登录已过期，请重新登录')
-            window.location.href = '/login'
+            window.location.href = '/store/login'
           }
           break
         case 403:

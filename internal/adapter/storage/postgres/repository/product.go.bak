@@ -47,9 +47,6 @@ func (pr *ProductRepository) CreateProduct(ctx context.Context, product *domain.
 		&product.Image,
 		&product.CreatedAt,
 		&product.UpdatedAt,
-		&product.Unit,
-		&product.BaseUnit,
-		&product.ConversionRate,
 	)
 	if err != nil {
 		if errCode := pr.db.ErrorCode(err); errCode == "23505" {
@@ -85,9 +82,6 @@ func (pr *ProductRepository) GetProductByID(ctx context.Context, id uint64) (*do
 		&product.Image,
 		&product.CreatedAt,
 		&product.UpdatedAt,
-		&product.Unit,
-		&product.BaseUnit,
-		&product.ConversionRate,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -139,9 +133,6 @@ func (pr *ProductRepository) ListProducts(ctx context.Context, search string, ca
 			&product.Image,
 			&product.CreatedAt,
 			&product.UpdatedAt,
-			&product.Unit,
-			&product.BaseUnit,
-			&product.ConversionRate,
 		)
 		if err != nil {
 			return nil, err
@@ -186,9 +177,6 @@ func (pr *ProductRepository) UpdateProduct(ctx context.Context, product *domain.
 		&product.Image,
 		&product.CreatedAt,
 		&product.UpdatedAt,
-		&product.Unit,
-		&product.BaseUnit,
-		&product.ConversionRate,
 	)
 	if err != nil {
 		if errCode := pr.db.ErrorCode(err); errCode == "23505" {
