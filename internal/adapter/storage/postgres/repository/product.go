@@ -27,9 +27,10 @@ func NewProductRepository(db *postgres.DB) *ProductRepository {
 
 // CreateProduct creates a new product record in the database
 func (pr *ProductRepository) CreateProduct(ctx context.Context, product *domain.Product) (*domain.Product, error) {
+	storeID := getStoreIDFromContext(ctx)
 	query := pr.db.QueryBuilder.Insert("products").
-		Columns("category_id", "name", "image", "price", "stock").
-		Values(product.CategoryID, product.Name, product.Image, product.Price, product.Stock).
+		Columns("category_id", "name", "image", "price", "stock", "store_id").
+		Values(product.CategoryID, product.Name, product.Image, product.Price, product.Stock, storeID).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -50,6 +51,7 @@ func (pr *ProductRepository) CreateProduct(ctx context.Context, product *domain.
 		&product.Unit,
 		&product.BaseUnit,
 		&product.ConversionRate,
+		&product.StoreID,
 	)
 	if err != nil {
 		if errCode := pr.db.ErrorCode(err); errCode == "23505" {
@@ -64,10 +66,12 @@ func (pr *ProductRepository) CreateProduct(ctx context.Context, product *domain.
 // GetProductByID retrieves a product record from the database by id
 func (pr *ProductRepository) GetProductByID(ctx context.Context, id uint64) (*domain.Product, error) {
 	var product domain.Product
+	storeID := getStoreIDFromContext(ctx)
 
 	query := pr.db.QueryBuilder.Select("*").
 		From("products").
 		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{"store_id": storeID}).
 		Limit(1)
 
 	sql, args, err := query.ToSql()
@@ -88,6 +92,7 @@ func (pr *ProductRepository) GetProductByID(ctx context.Context, id uint64) (*do
 		&product.Unit,
 		&product.BaseUnit,
 		&product.ConversionRate,
+		&product.StoreID,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -103,12 +108,14 @@ func (pr *ProductRepository) GetProductByID(ctx context.Context, id uint64) (*do
 func (pr *ProductRepository) ListProducts(ctx context.Context, search string, categoryId, skip, limit uint64) ([]domain.Product, error) {
 	var product domain.Product
 	var products []domain.Product
+	storeID := getStoreIDFromContext(ctx)
 
 	query := pr.db.QueryBuilder.Select("*").
 		From("products").
+		Where(sq.Eq{"store_id": storeID}).
 		OrderBy("id").
 		Limit(limit).
-		Offset((skip - 1) * limit)
+		Offset(skip * limit)
 
 	if categoryId != 0 {
 		query = query.Where(sq.Eq{"category_id": categoryId})
@@ -142,6 +149,7 @@ func (pr *ProductRepository) ListProducts(ctx context.Context, search string, ca
 			&product.Unit,
 			&product.BaseUnit,
 			&product.ConversionRate,
+			&product.StoreID,
 		)
 		if err != nil {
 			return nil, err
@@ -160,6 +168,7 @@ func (pr *ProductRepository) UpdateProduct(ctx context.Context, product *domain.
 	image := nullString(product.Image)
 	price := nullFloat64(product.Price)
 	stock := nullInt64(product.Stock)
+	storeID := getStoreIDFromContext(ctx)
 
 	query := pr.db.QueryBuilder.Update("products").
 		Set("name", sq.Expr("COALESCE(?, name)", name)).
@@ -169,6 +178,7 @@ func (pr *ProductRepository) UpdateProduct(ctx context.Context, product *domain.
 		Set("stock", sq.Expr("COALESCE(?, stock)", stock)).
 		Set("updated_at", time.Now()).
 		Where(sq.Eq{"id": product.ID}).
+		Where(sq.Eq{"store_id": storeID}).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -189,6 +199,7 @@ func (pr *ProductRepository) UpdateProduct(ctx context.Context, product *domain.
 		&product.Unit,
 		&product.BaseUnit,
 		&product.ConversionRate,
+		&product.StoreID,
 	)
 	if err != nil {
 		if errCode := pr.db.ErrorCode(err); errCode == "23505" {
@@ -202,8 +213,10 @@ func (pr *ProductRepository) UpdateProduct(ctx context.Context, product *domain.
 
 // DeleteProduct deletes a product record from the database by id
 func (pr *ProductRepository) DeleteProduct(ctx context.Context, id uint64) error {
+	storeID := getStoreIDFromContext(ctx)
 	query := pr.db.QueryBuilder.Delete("products").
-		Where(sq.Eq{"id": id})
+		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{"store_id": storeID})
 
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -216,4 +229,52 @@ func (pr *ProductRepository) DeleteProduct(ctx context.Context, id uint64) error
 	}
 
 	return nil
+}
+
+// ListLowStockProducts retrieves products with stock below the threshold
+func (pr *ProductRepository) ListLowStockProducts(ctx context.Context, threshold int64) ([]domain.Product, error) {
+	var product domain.Product
+	var products []domain.Product
+	storeID := getStoreIDFromContext(ctx)
+
+	query := pr.db.QueryBuilder.Select("*").
+		From("products").
+		Where(sq.Eq{"store_id": storeID}).
+		Where(sq.LtOrEq{"stock": threshold}).
+		OrderBy("stock ASC")
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := pr.db.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(
+			&product.ID,
+			&product.CategoryID,
+			&product.SKU,
+			&product.Name,
+			&product.Stock,
+			&product.Price,
+			&product.Image,
+			&product.CreatedAt,
+			&product.UpdatedAt,
+			&product.Unit,
+			&product.BaseUnit,
+			&product.ConversionRate,
+			&product.StoreID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		products = append(products, product)
+	}
+
+	return products, nil
 }

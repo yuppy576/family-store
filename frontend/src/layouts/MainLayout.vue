@@ -52,9 +52,16 @@
               <el-menu-item index="/store/products"><el-icon><Box /></el-icon><span>商品管理</span></el-menu-item>
               <el-menu-item index="/store/suppliers"><el-icon><User /></el-icon><span>供应商管理</span></el-menu-item>
               <el-menu-item index="/store/purchases"><el-icon><Download /></el-icon><span>进货管理</span></el-menu-item>
+              <el-menu-item index="/store/low-stock"><el-icon><Bell /></el-icon><span>库存预警</span></el-menu-item>
               <el-menu-item index="/store/pos"><el-icon><ShoppingCart /></el-icon><span>POS收银</span></el-menu-item>
+              <el-menu-item index="/store/reports"><el-icon><TrendCharts /></el-icon><span>报表中心</span></el-menu-item>
             </el-sub-menu>
           </template>
+          <el-sub-menu index="system">
+            <template #title><el-icon><Setting /></el-icon><span>系统管理</span></template>
+            <el-menu-item index="/system/audit-logs"><el-icon><Document /></el-icon><span>操作日志</span></el-menu-item>
+            <el-menu-item index="/system/subscription"><el-icon><CreditCard /></el-icon><span>订阅管理</span></el-menu-item>
+          </el-sub-menu>
         </el-menu>
       </aside>
 
@@ -71,7 +78,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import request from '@/api/request'
-import { Menu, List, User, Goods, Shop, Box, ShoppingCart, Money, Guide, Download } from '@element-plus/icons-vue'
+import { Menu, List, User, Goods, Shop, Box, ShoppingCart, Money, Guide, Download, Setting, Document, CreditCard, Bell, TrendCharts } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()

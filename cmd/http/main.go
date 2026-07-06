@@ -116,6 +116,9 @@ func main() {
 	orderService := service.NewOrderService(orderRepo, productRepo, categoryRepo, userRepo, paymentRepo, cache)
 	orderHandler := http.NewOrderHandler(orderService)
 
+	// Report
+	reportHandler := http.NewReportHandler(orderService)
+
 	consignmentRepo := repository.NewConsignmentRepository(db)
 	consignmentService := service.NewConsignmentService(consignmentRepo)
 	consignmentHandler := http.NewConsignmentHandler(consignmentService)
@@ -124,6 +127,24 @@ func main() {
 	supplierService := service.NewSupplierService(supplierRepo)
 	supplierHandler := http.NewSupplierHandler(supplierService)
 	purchaseHandler := http.NewPurchaseHandler(supplierService)
+
+	// Audit Log
+	auditLogRepo := repository.NewAuditLogRepository(db)
+	auditLogService := service.NewAuditLogService(auditLogRepo, cache)
+	auditLogHandler := http.NewAuditLogHandler(auditLogService)
+
+	// Store
+	storeRepo := repository.NewStoreRepository(db)
+	
+	// Subscription
+	subscriptionRepo := repository.NewSubscriptionRepository(db)
+	subscriptionService := service.NewSubscriptionService(subscriptionRepo, storeRepo)
+	subscriptionHandler := http.NewSubscriptionHandler(subscriptionService)
+	http.SetSubscriptionServiceForMiddleware(subscriptionService)
+	
+	storeService := service.NewStoreService(storeRepo, userRepo, token, cache, subscriptionService)
+	storeHandler := http.NewStoreHandler(storeService)
+	http.SetStoreServiceForSubdomain(storeService)
 
 	// Init router
 	router, err := http.NewRouter(
@@ -138,6 +159,11 @@ func main() {
 		*consignmentHandler,
 		*supplierHandler,
 		*purchaseHandler,
+		*auditLogHandler,
+		auditLogService,
+		*storeHandler,
+		*subscriptionHandler,
+		*reportHandler,
 	)
 	if err != nil {
 		slog.Error("Error initializing router", "error", err)

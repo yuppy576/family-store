@@ -33,6 +33,10 @@
         <el-icon><Plus /></el-icon>
         新增寄卖品
       </el-button>
+      <el-button type="success" @click="handleExport">
+        <el-icon><Download /></el-icon>
+        导出数据
+      </el-button>
     </div>
 
     <!-- Table -->
@@ -106,7 +110,7 @@
         <el-table-column label="创建时间" width="170">
           <template #default="{ row }">{{ formatTime(row.created_at || row.createdAt) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="primary" link @click="openEditDialog(row)">
               编辑
@@ -116,6 +120,9 @@
             </el-button>
             <el-button v-if="row.is_vehicle || row.isVehicle" size="small" type="warning" link @click="goTransfer(row)">
               过户
+            </el-button>
+            <el-button size="small" type="info" link @click="printContract(row)">
+              🖨️合同
             </el-button>
             <el-popconfirm
               title="确定要删除此寄卖品吗？"
@@ -283,7 +290,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Download } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import {
   loadAllConsignments,
@@ -296,6 +303,8 @@ import {
   getVehicle,
 } from '@/api/consignment'
 import type { ConsignmentData } from '@/api/consignment'
+import { printConsignmentContract } from '@/utils/print'
+import { exportConsignments } from '@/utils/export'
 
 interface ConsignorOption {
   id: number
@@ -317,18 +326,26 @@ interface VehicleInfo {
 
 interface ConsignmentRecord {
   id: number
+  name?: string
   itemName: string
   description?: string
+  consignor_id?: number
   consignorId: number
   consignorName?: string
   consignor?: ConsignorOption
+  expected_price?: number
   expectedPrice?: number
+  final_price?: number
   sellingPrice?: number
+  commission_rate?: number
   commission?: number
   status: string
+  is_vehicle?: boolean
   isVehicle: boolean
   images?: string[]
+  memo?: string
   remark?: string
+  created_at?: string
   createdAt: string
   vehicle?: VehicleInfo
 }
@@ -349,6 +366,20 @@ function goSettlement(row: any) {
 function goTransfer(row: any) {
   router.push({ path: '/consignment/transfer', query: { id: row.id } })
 }
+
+async function printContract(row: any) {
+  const consignor = consignorOptions.value.find(c => c.id === (row.consignor_id ?? row.consignorId))
+  let itemWithData = { ...row }
+  if (row.is_vehicle || row.isVehicle) {
+    try {
+      const vRes = await getVehicle(row.id)
+      const v = vRes.data?.data || vRes.data
+      if (v && v.id) itemWithData.vehicle = v
+    } catch {}
+  }
+  printConsignmentContract(itemWithData, consignor || row.consignor)
+}
+function handleExport(){exportConsignments(tableData.value)}
 
 const filterForm = reactive({
   status: '',

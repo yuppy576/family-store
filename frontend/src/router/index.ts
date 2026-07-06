@@ -61,12 +61,36 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/store/PosCheckout.vue'),
         meta: { title: 'POS收银' },
       },
+      {
+        path: 'system/audit-logs',
+        name: 'AuditLogList',
+        component: () => import('@/views/AuditLogList.vue'),
+        meta: { title: '操作日志' },
+      },
+      {
+        path: 'system/subscription',
+        name: 'Subscription',
+        component: () => import('@/views/system/Subscription.vue'),
+        meta: { title: '订阅管理' },
+      },
+      {
+        path: 'store/low-stock',
+        name: 'LowStockList',
+        component: () => import('@/views/store/LowStockList.vue'),
+        meta: { title: '库存预警' },
+      },
+      {
+        path: 'store/reports',
+        name: 'ReportList',
+        component: () => import('@/views/store/ReportList.vue'),
+        meta: { title: '报表中心' },
+      },
     ],
   },
 ]
 
 const router = createRouter({
-  history: createWebHistory('/store/'),
+  history: createWebHistory(),
   routes,
 })
 

@@ -2,6 +2,7 @@ package port
 
 import (
 	"context"
+	"time"
 
 	"github.com/bagashiz/go-pos/internal/core/domain"
 )
@@ -16,6 +17,10 @@ type OrderRepository interface {
 	GetOrderByID(ctx context.Context, id uint64) (*domain.Order, error)
 	// ListOrders selects a list of orders with pagination
 	ListOrders(ctx context.Context, skip, limit uint64) ([]domain.Order, error)
+	// GetSalesStats returns sales statistics for a date range
+	GetSalesStats(ctx context.Context, startDate, endDate time.Time) (*domain.SalesStats, error)
+	// GetDailySales returns daily sales data for a date range
+	GetDailySales(ctx context.Context, startDate, endDate time.Time) ([]domain.DailySales, error)
 }
 
 // OrderService is an interface for interacting with order-related business logic
@@ -26,4 +31,8 @@ type OrderService interface {
 	GetOrder(ctx context.Context, id uint64) (*domain.Order, error)
 	// ListOrders returns a list of orders with pagination
 	ListOrders(ctx context.Context, skip, limit uint64) ([]domain.Order, error)
+	// GetSalesStats returns sales statistics for a date range
+	GetSalesStats(ctx context.Context, startDate, endDate time.Time) (*domain.SalesStats, error)
+	// GetDailySales returns daily sales data for a date range
+	GetDailySales(ctx context.Context, startDate, endDate time.Time) ([]domain.DailySales, error)
 }

@@ -11,7 +11,8 @@ export interface UserInfo {
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
-  const user = ref<UserInfo | null>(() => {
+  
+  const getUserFromStorage = (): UserInfo | null => {
     const raw = localStorage.getItem('user')
     if (raw) {
       try {
@@ -21,16 +22,18 @@ export const useAuthStore = defineStore('auth', () => {
       }
     }
     return null
-  })
+  }
+  
+  const user = ref<UserInfo | null>(getUserFromStorage())
 
   const isLoggedIn = computed(() => !!token.value)
 
   async function login(email: string, password: string): Promise<void> {
     const res = await loginApi({ email, password })
-    const body = res.data
+    const body = res.data as any
     const tok = body.data.token
     token.value = tok
-    user.value = { id: 0, email, name: email.split('@')[0] }
+    user.value = { id: body.data.user.id, email: body.data.user.email, name: body.data.user.name }
     localStorage.setItem('token', tok)
     localStorage.setItem('user', JSON.stringify(user.value))
     router.push('/')

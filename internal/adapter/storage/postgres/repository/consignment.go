@@ -22,9 +22,10 @@ func NewConsignmentRepository(db *postgres.DB) *ConsignmentRepository {
 // ── Consignor ────────────────────────────────────────────────
 
 func (cr *ConsignmentRepository) CreateConsignor(ctx context.Context, consignor *domain.Consignor) (*domain.Consignor, error) {
+	storeID := getStoreIDFromContext(ctx)
 	query := cr.db.QueryBuilder.Insert("consignors").
-		Columns("name", "phone", "id_card", "address", "memo", "created_at", "updated_at").
-		Values(consignor.Name, consignor.Phone, consignor.IDCard, consignor.Address, consignor.Memo, consignor.CreatedAt, consignor.UpdatedAt).
+		Columns("name", "phone", "id_card", "address", "memo", "created_at", "updated_at", "store_id").
+		Values(consignor.Name, consignor.Phone, consignor.IDCard, consignor.Address, consignor.Memo, consignor.CreatedAt, consignor.UpdatedAt, storeID).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -34,7 +35,7 @@ func (cr *ConsignmentRepository) CreateConsignor(ctx context.Context, consignor 
 
 	err = cr.db.QueryRow(ctx, sql, args...).Scan(
 		&consignor.ID, &consignor.Name, &consignor.Phone, &consignor.IDCard,
-		&consignor.Address, &consignor.Memo, &consignor.CreatedAt, &consignor.UpdatedAt,
+		&consignor.Address, &consignor.Memo, &consignor.CreatedAt, &consignor.UpdatedAt, &consignor.StoreID,
 	)
 	if err != nil {
 		return nil, err
@@ -44,13 +45,14 @@ func (cr *ConsignmentRepository) CreateConsignor(ctx context.Context, consignor 
 
 func (cr *ConsignmentRepository) GetConsignorByID(ctx context.Context, id uint64) (*domain.Consignor, error) {
 	var c domain.Consignor
-	query := cr.db.QueryBuilder.Select("*").From("consignors").Where(sq.Eq{"id": id}).Limit(1)
+	storeID := getStoreIDFromContext(ctx)
+	query := cr.db.QueryBuilder.Select("*").From("consignors").Where(sq.Eq{"id": id, "store_id": storeID}).Limit(1)
 	sql, args, err := query.ToSql()
 	if err != nil {
 		return nil, err
 	}
 	err = cr.db.QueryRow(ctx, sql, args...).Scan(
-		&c.ID, &c.Name, &c.Phone, &c.IDCard, &c.Address, &c.Memo, &c.CreatedAt, &c.UpdatedAt,
+		&c.ID, &c.Name, &c.Phone, &c.IDCard, &c.Address, &c.Memo, &c.CreatedAt, &c.UpdatedAt, &c.StoreID,
 	)
 	if err != nil {
 		return nil, handleDBError(err)
@@ -59,7 +61,8 @@ func (cr *ConsignmentRepository) GetConsignorByID(ctx context.Context, id uint64
 }
 
 func (cr *ConsignmentRepository) ListConsignors(ctx context.Context, search string, skip, limit uint64) ([]domain.Consignor, error) {
-	q := cr.db.QueryBuilder.Select("*").From("consignors")
+	storeID := getStoreIDFromContext(ctx)
+	q := cr.db.QueryBuilder.Select("*").From("consignors").Where(sq.Eq{"store_id": storeID})
 	if search != "" {
 		q = q.Where(sq.Or{
 			sq.ILike{"name": "%" + search + "%"},
@@ -81,7 +84,7 @@ func (cr *ConsignmentRepository) ListConsignors(ctx context.Context, search stri
 	var consignors []domain.Consignor
 	for rows.Next() {
 		var c domain.Consignor
-		if err := rows.Scan(&c.ID, &c.Name, &c.Phone, &c.IDCard, &c.Address, &c.Memo, &c.CreatedAt, &c.UpdatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.Name, &c.Phone, &c.IDCard, &c.Address, &c.Memo, &c.CreatedAt, &c.UpdatedAt, &c.StoreID); err != nil {
 			return nil, err
 		}
 		consignors = append(consignors, c)
@@ -90,6 +93,7 @@ func (cr *ConsignmentRepository) ListConsignors(ctx context.Context, search stri
 }
 
 func (cr *ConsignmentRepository) UpdateConsignor(ctx context.Context, consignor *domain.Consignor) (*domain.Consignor, error) {
+	storeID := getStoreIDFromContext(ctx)
 	query := cr.db.QueryBuilder.Update("consignors").
 		Set("name", consignor.Name).
 		Set("phone", consignor.Phone).
@@ -97,7 +101,7 @@ func (cr *ConsignmentRepository) UpdateConsignor(ctx context.Context, consignor 
 		Set("address", consignor.Address).
 		Set("memo", consignor.Memo).
 		Set("updated_at", consignor.UpdatedAt).
-		Where(sq.Eq{"id": consignor.ID}).
+		Where(sq.Eq{"id": consignor.ID, "store_id": storeID}).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -106,7 +110,7 @@ func (cr *ConsignmentRepository) UpdateConsignor(ctx context.Context, consignor 
 	}
 	err = cr.db.QueryRow(ctx, sql, args...).Scan(
 		&consignor.ID, &consignor.Name, &consignor.Phone, &consignor.IDCard,
-		&consignor.Address, &consignor.Memo, &consignor.CreatedAt, &consignor.UpdatedAt,
+		&consignor.Address, &consignor.Memo, &consignor.CreatedAt, &consignor.UpdatedAt, &consignor.StoreID,
 	)
 	if err != nil {
 		return nil, handleDBError(err)
@@ -115,7 +119,8 @@ func (cr *ConsignmentRepository) UpdateConsignor(ctx context.Context, consignor 
 }
 
 func (cr *ConsignmentRepository) DeleteConsignor(ctx context.Context, id uint64) error {
-	query := cr.db.QueryBuilder.Delete("consignors").Where(sq.Eq{"id": id})
+	storeID := getStoreIDFromContext(ctx)
+	query := cr.db.QueryBuilder.Delete("consignors").Where(sq.Eq{"id": id, "store_id": storeID})
 	sql, args, err := query.ToSql()
 	if err != nil {
 		return err
@@ -127,15 +132,16 @@ func (cr *ConsignmentRepository) DeleteConsignor(ctx context.Context, id uint64)
 // ── Consignment ──────────────────────────────────────────────
 
 func (cr *ConsignmentRepository) CreateConsignment(ctx context.Context, cons *domain.Consignment) (*domain.Consignment, error) {
+	storeID := getStoreIDFromContext(ctx)
 	query := cr.db.QueryBuilder.Insert("consignments").
 		Columns("consignor_id", "name", "description", "images", "category",
 			"expected_price", "recommended_price", "final_price",
 			"commission_rate", "commission_amount", "status",
-			"contract_end", "is_vehicle", "memo", "created_at", "updated_at").
+			"contract_end", "is_vehicle", "memo", "created_at", "updated_at", "store_id").
 		Values(cons.ConsignorID, cons.Name, cons.Description, cons.Images, cons.Category,
 			cons.ExpectedPrice, cons.RecommendedPrice, cons.FinalPrice,
 			cons.CommissionRate, cons.CommissionAmount, cons.Status,
-			cons.ContractEnd, cons.IsVehicle, cons.Memo, cons.CreatedAt, cons.UpdatedAt).
+			cons.ContractEnd, cons.IsVehicle, cons.Memo, cons.CreatedAt, cons.UpdatedAt, storeID).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -147,7 +153,7 @@ func (cr *ConsignmentRepository) CreateConsignment(ctx context.Context, cons *do
 		&cons.ID, &cons.ConsignorID, &cons.Name, &cons.Description, &cons.Images,
 		&cons.Category, &cons.ExpectedPrice, &cons.RecommendedPrice, &cons.FinalPrice,
 		&cons.CommissionRate, &cons.CommissionAmount, &cons.Status,
-		&cons.ContractEnd, &cons.IsVehicle, &cons.Memo, &cons.CreatedAt, &cons.UpdatedAt,
+		&cons.ContractEnd, &cons.IsVehicle, &cons.Memo, &cons.CreatedAt, &cons.UpdatedAt, &cons.StoreID,
 	)
 	if err != nil {
 		return nil, err
@@ -157,7 +163,8 @@ func (cr *ConsignmentRepository) CreateConsignment(ctx context.Context, cons *do
 
 func (cr *ConsignmentRepository) GetConsignmentByID(ctx context.Context, id uint64) (*domain.Consignment, error) {
 	var c domain.Consignment
-	query := cr.db.QueryBuilder.Select("*").From("consignments").Where(sq.Eq{"id": id}).Limit(1)
+	storeID := getStoreIDFromContext(ctx)
+	query := cr.db.QueryBuilder.Select("*").From("consignments").Where(sq.Eq{"id": id, "store_id": storeID}).Limit(1)
 	sql, args, err := query.ToSql()
 	if err != nil {
 		return nil, err
@@ -166,7 +173,7 @@ func (cr *ConsignmentRepository) GetConsignmentByID(ctx context.Context, id uint
 		&c.ID, &c.ConsignorID, &c.Name, &c.Description, &c.Images,
 		&c.Category, &c.ExpectedPrice, &c.RecommendedPrice, &c.FinalPrice,
 		&c.CommissionRate, &c.CommissionAmount, &c.Status,
-		&c.ContractEnd, &c.IsVehicle, &c.Memo, &c.CreatedAt, &c.UpdatedAt,
+		&c.ContractEnd, &c.IsVehicle, &c.Memo, &c.CreatedAt, &c.UpdatedAt, &c.StoreID,
 	)
 	if err != nil {
 		return nil, handleDBError(err)
@@ -175,7 +182,8 @@ func (cr *ConsignmentRepository) GetConsignmentByID(ctx context.Context, id uint
 }
 
 func (cr *ConsignmentRepository) ListConsignments(ctx context.Context, status string, skip, limit uint64) ([]domain.Consignment, error) {
-	q := cr.db.QueryBuilder.Select("*").From("consignments")
+	storeID := getStoreIDFromContext(ctx)
+	q := cr.db.QueryBuilder.Select("*").From("consignments").Where(sq.Eq{"store_id": storeID})
 	if status != "" {
 		q = q.Where(sq.Eq{"status": status})
 	}
@@ -197,7 +205,7 @@ func (cr *ConsignmentRepository) ListConsignments(ctx context.Context, status st
 		if err := rows.Scan(&c.ID, &c.ConsignorID, &c.Name, &c.Description, &c.Images,
 			&c.Category, &c.ExpectedPrice, &c.RecommendedPrice, &c.FinalPrice,
 			&c.CommissionRate, &c.CommissionAmount, &c.Status,
-			&c.ContractEnd, &c.IsVehicle, &c.Memo, &c.CreatedAt, &c.UpdatedAt); err != nil {
+			&c.ContractEnd, &c.IsVehicle, &c.Memo, &c.CreatedAt, &c.UpdatedAt, &c.StoreID); err != nil {
 			return nil, err
 		}
 		items = append(items, c)
@@ -205,9 +213,10 @@ func (cr *ConsignmentRepository) ListConsignments(ctx context.Context, status st
 	return items, nil
 }
 func (cr *ConsignmentRepository) ListExpiringConsignments(ctx context.Context, withinDays int32) ([]domain.Consignment, error) {
+	storeID := getStoreIDFromContext(ctx)
 	rows, err := cr.db.Query(ctx,
-		"SELECT * FROM consignments WHERE status = $1 AND contract_end <= CURRENT_DATE + CAST($2 AS INTEGER) ORDER BY contract_end ASC",
-		"ON_SALE", withinDays)
+		"SELECT * FROM consignments WHERE store_id = $1 AND status = $2 AND contract_end <= CURRENT_DATE + CAST($3 AS INTEGER) ORDER BY contract_end ASC",
+		storeID, "ON_SALE", withinDays)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +227,7 @@ func (cr *ConsignmentRepository) ListExpiringConsignments(ctx context.Context, w
 		if err := rows.Scan(&c.ID, &c.ConsignorID, &c.Name, &c.Description, &c.Images,
 			&c.Category, &c.ExpectedPrice, &c.RecommendedPrice, &c.FinalPrice,
 			&c.CommissionRate, &c.CommissionAmount, &c.Status,
-			&c.ContractEnd, &c.IsVehicle, &c.Memo, &c.CreatedAt, &c.UpdatedAt); err != nil {
+			&c.ContractEnd, &c.IsVehicle, &c.Memo, &c.CreatedAt, &c.UpdatedAt, &c.StoreID); err != nil {
 			return nil, err
 		}
 		items = append(items, c)
@@ -227,6 +236,7 @@ func (cr *ConsignmentRepository) ListExpiringConsignments(ctx context.Context, w
 }
 
 func (cr *ConsignmentRepository) UpdateConsignment(ctx context.Context, cons *domain.Consignment) (*domain.Consignment, error) {
+	storeID := getStoreIDFromContext(ctx)
 	query := cr.db.QueryBuilder.Update("consignments").
 		Set("name", cons.Name).Set("description", cons.Description).
 		Set("category", cons.Category).Set("expected_price", cons.ExpectedPrice).
@@ -234,7 +244,7 @@ func (cr *ConsignmentRepository) UpdateConsignment(ctx context.Context, cons *do
 		Set("commission_rate", cons.CommissionRate).Set("commission_amount", cons.CommissionAmount).
 		Set("status", cons.Status).Set("contract_end", cons.ContractEnd).
 		Set("memo", cons.Memo).Set("updated_at", cons.UpdatedAt).
-		Where(sq.Eq{"id": cons.ID}).Suffix("RETURNING *")
+		Where(sq.Eq{"id": cons.ID, "store_id": storeID}).Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -244,7 +254,7 @@ func (cr *ConsignmentRepository) UpdateConsignment(ctx context.Context, cons *do
 		&cons.ID, &cons.ConsignorID, &cons.Name, &cons.Description, &cons.Images,
 		&cons.Category, &cons.ExpectedPrice, &cons.RecommendedPrice, &cons.FinalPrice,
 		&cons.CommissionRate, &cons.CommissionAmount, &cons.Status,
-		&cons.ContractEnd, &cons.IsVehicle, &cons.Memo, &cons.CreatedAt, &cons.UpdatedAt,
+		&cons.ContractEnd, &cons.IsVehicle, &cons.Memo, &cons.CreatedAt, &cons.UpdatedAt, &cons.StoreID,
 	)
 	if err != nil {
 		return nil, handleDBError(err)
@@ -253,7 +263,8 @@ func (cr *ConsignmentRepository) UpdateConsignment(ctx context.Context, cons *do
 }
 
 func (cr *ConsignmentRepository) DeleteConsignment(ctx context.Context, id uint64) error {
-	query := cr.db.QueryBuilder.Delete("consignments").Where(sq.Eq{"id": id})
+	storeID := getStoreIDFromContext(ctx)
+	query := cr.db.QueryBuilder.Delete("consignments").Where(sq.Eq{"id": id, "store_id": storeID})
 	sql, args, err := query.ToSql()
 	if err != nil {
 		return err

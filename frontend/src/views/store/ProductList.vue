@@ -8,6 +8,7 @@
     </el-card>
     <div class="mb-3">
       <el-button type="primary" @click="showAdd"><el-icon><Plus /></el-icon> 新增商品</el-button>
+      <el-button type="success" @click="handleExport"><el-icon><Download /></el-icon> 导出数据</el-button>
       <el-tag v-if="lowStockCount>0" type="danger" class="ml-2">库存预警：{{ lowStockCount }} 种商品库存不足</el-tag>
       <span class="ml-2" style="font-size:12px;color:#909399">预警阈值：</span>
       <el-input-number v-model="lowStockThreshold" :min="1" :max="99" size="small" style="width:80px" />
@@ -50,7 +51,9 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Download } from '@element-plus/icons-vue'
 import request from '@/api/request'
+import { exportProducts } from '@/utils/export'
 const loading=ref(false),submitting=ref(false),dialogVisible=ref(false),isEdit=ref(false),formRef=ref()
 const tableData=ref<any[]>([]),categories=ref<any[]>([])
 const lowStockThreshold=ref(10)
@@ -88,6 +91,7 @@ async function submitForm(){
     dialogVisible.value=false;loadData()
   }finally{submitting.value=false}
 }
+function handleExport(){exportProducts(tableData.value)}
 onMounted(()=>{loadData();loadCategories()})
 </script>
 <style scoped>

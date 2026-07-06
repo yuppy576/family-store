@@ -10,26 +10,19 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-/**
- * CategoryRepository implements port.CategoryRepository interface
- * and provides an access to the postgres database
- */
 type CategoryRepository struct {
 	db *postgres.DB
 }
 
-// NewCategoryRepository creates a new category repository instance
 func NewCategoryRepository(db *postgres.DB) *CategoryRepository {
-	return &CategoryRepository{
-		db,
-	}
+	return &CategoryRepository{db}
 }
 
-// CreateCategory creates a new category record in the database
 func (cr *CategoryRepository) CreateCategory(ctx context.Context, category *domain.Category) (*domain.Category, error) {
+	storeID := getStoreIDFromContext(ctx)
 	query := cr.db.QueryBuilder.Insert("categories").
-		Columns("name").
-		Values(category.Name).
+		Columns("name", "store_id").
+		Values(category.Name, storeID).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -42,6 +35,7 @@ func (cr *CategoryRepository) CreateCategory(ctx context.Context, category *doma
 		&category.Name,
 		&category.CreatedAt,
 		&category.UpdatedAt,
+		&category.StoreID,
 	)
 	if err != nil {
 		if errCode := cr.db.ErrorCode(err); errCode == "23505" {
@@ -53,13 +47,14 @@ func (cr *CategoryRepository) CreateCategory(ctx context.Context, category *doma
 	return category, nil
 }
 
-// GetCategoryByID retrieves a category record from the database by id
 func (cr *CategoryRepository) GetCategoryByID(ctx context.Context, id uint64) (*domain.Category, error) {
 	var category domain.Category
+	storeID := getStoreIDFromContext(ctx)
 
 	query := cr.db.QueryBuilder.Select("*").
 		From("categories").
 		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{"store_id": storeID}).
 		Limit(1)
 
 	sql, args, err := query.ToSql()
@@ -72,6 +67,7 @@ func (cr *CategoryRepository) GetCategoryByID(ctx context.Context, id uint64) (*
 		&category.Name,
 		&category.CreatedAt,
 		&category.UpdatedAt,
+		&category.StoreID,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -83,16 +79,17 @@ func (cr *CategoryRepository) GetCategoryByID(ctx context.Context, id uint64) (*
 	return &category, nil
 }
 
-// ListCategories retrieves a list of categories from the database
 func (cr *CategoryRepository) ListCategories(ctx context.Context, skip, limit uint64) ([]domain.Category, error) {
 	var category domain.Category
 	var categories []domain.Category
+	storeID := getStoreIDFromContext(ctx)
 
 	query := cr.db.QueryBuilder.Select("*").
 		From("categories").
+		Where(sq.Eq{"store_id": storeID}).
 		OrderBy("id").
 		Limit(limit).
-		Offset((skip - 1) * limit)
+		Offset(skip * limit)
 
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -110,6 +107,7 @@ func (cr *CategoryRepository) ListCategories(ctx context.Context, skip, limit ui
 			&category.Name,
 			&category.CreatedAt,
 			&category.UpdatedAt,
+			&category.StoreID,
 		)
 		if err != nil {
 			return nil, err
@@ -121,12 +119,13 @@ func (cr *CategoryRepository) ListCategories(ctx context.Context, skip, limit ui
 	return categories, nil
 }
 
-// UpdateCategory updates a category record in the database
 func (cr *CategoryRepository) UpdateCategory(ctx context.Context, category *domain.Category) (*domain.Category, error) {
+	storeID := getStoreIDFromContext(ctx)
 	query := cr.db.QueryBuilder.Update("categories").
 		Set("name", category.Name).
 		Set("updated_at", time.Now()).
 		Where(sq.Eq{"id": category.ID}).
+		Where(sq.Eq{"store_id": storeID}).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -139,6 +138,7 @@ func (cr *CategoryRepository) UpdateCategory(ctx context.Context, category *doma
 		&category.Name,
 		&category.CreatedAt,
 		&category.UpdatedAt,
+		&category.StoreID,
 	)
 	if err != nil {
 		if errCode := cr.db.ErrorCode(err); errCode == "23505" {
@@ -150,10 +150,11 @@ func (cr *CategoryRepository) UpdateCategory(ctx context.Context, category *doma
 	return category, nil
 }
 
-// DeleteCategory deletes a category record from the database by id
 func (cr *CategoryRepository) DeleteCategory(ctx context.Context, id uint64) error {
+	storeID := getStoreIDFromContext(ctx)
 	query := cr.db.QueryBuilder.Delete("categories").
-		Where(sq.Eq{"id": id})
+		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{"store_id": storeID})
 
 	sql, args, err := query.ToSql()
 	if err != nil {

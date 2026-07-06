@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/bagashiz/go-pos/internal/core/domain"
 	"github.com/bagashiz/go-pos/internal/core/port"
@@ -277,4 +278,12 @@ func (os *OrderService) ListOrders(ctx context.Context, skip, limit uint64) ([]d
 	}
 
 	return orders, nil
+}
+
+func (os *OrderService) GetSalesStats(ctx context.Context, startDate, endDate time.Time) (*domain.SalesStats, error) {
+	return os.orderRepo.GetSalesStats(ctx, startDate, endDate)
+}
+
+func (os *OrderService) GetDailySales(ctx context.Context, startDate, endDate time.Time) ([]domain.DailySales, error) {
+	return os.orderRepo.GetDailySales(ctx, startDate, endDate)
 }

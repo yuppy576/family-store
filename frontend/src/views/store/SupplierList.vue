@@ -11,7 +11,7 @@
         </el-form-item>
       </el-form>
     </el-card>
-    <div class="mb-3"><el-button type="primary" @click="dialogVisible=true;isEdit=false;form={}"><el-icon><Plus /></el-icon> 新增供应商</el-button></div>
+    <div class="mb-3"><el-button type="primary" @click="dialogVisible=true;isEdit=false;form={}"><el-icon><Plus /></el-icon> 新增供应商</el-button><el-button type="success" @click="handleExport"><el-icon><Download /></el-icon> 导出数据</el-button></div>
     <el-card shadow="never">
       <el-table :data="tableData" v-loading="loading" stripe border style="width:100%">
         <el-table-column prop="id" label="ID" width="70" />
@@ -47,7 +47,9 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Download } from '@element-plus/icons-vue'
 import request from '@/api/request'
+import { exportSuppliers } from '@/utils/export'
 
 const loading=ref(false),submitting=ref(false),dialogVisible=ref(false),isEdit=ref(false),formRef=ref()
 const tableData=ref<any[]>([]),total=ref(0),page=ref(1),pageSize=ref(20)
@@ -79,6 +81,7 @@ async function submitForm(){
     dialogVisible.value=false;loadData()
   }finally{submitting.value=false}
 }
+function handleExport(){exportSuppliers(tableData.value)}
 onMounted(loadData)
 </script>
 <style scoped>

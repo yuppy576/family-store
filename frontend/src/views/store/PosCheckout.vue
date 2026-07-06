@@ -65,6 +65,9 @@
           <el-button type="success" :disabled="cart.length===0||!paymentId" :loading="submitting" size="large" style="width:100%" @click="submitOrder">
             结算收款 ¥{{ totalAmount.toFixed(2) }}
           </el-button>
+          <el-button v-if="lastOrder" type="warning" plain size="default" style="width:100%;margin-top:8px;margin-left:0" @click="doPrintReceipt">
+            🖨️ 打印小票
+          </el-button>
         </el-card>
       </el-col>
     </el-row>
@@ -74,10 +77,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/api/request'
+import { printReceipt } from '@/utils/print'
 
 const products=ref<any[]>([]),categories=ref<any[]>([]),payments=ref<any[]>([])
 const searchText=ref(''),categoryFilter=ref(null),paymentId=ref(null),submitting=ref(false)
 const cart=ref<any[]>([])
+const lastOrder=ref<any>(null)
+const lastCart=ref<any[]>([])
+const lastPaymentName=ref('')
+const lastTotal=ref(0)
 
 const totalAmount=computed(()=>cart.value.reduce((s,i)=>s+i.price*i.qty,0))
 
@@ -112,10 +120,19 @@ async function submitOrder(){
       customer_name:'散客',
       products:cart.value.map(i=>({product_id:i.id,qty:i.qty}))
     })
+    const d=res.data
+    const orderData=d.success?d.data:d
+    lastOrder.value=orderData
+    lastCart.value=JSON.parse(JSON.stringify(cart.value))
+    lastPaymentName.value=payments.value.find(p=>p.id===paymentId.value)?.name||''
+    lastTotal.value=totalAmount.value
     ElMessage.success(`收款成功！¥${totalAmount.value.toFixed(2)}`)
     cart.value=[]
     loadProducts()
   }catch{}finally{submitting.value=false}
+}
+function doPrintReceipt(){
+  printReceipt(lastOrder.value,lastCart.value,lastPaymentName.value,lastTotal.value)
 }
 onMounted(()=>{loadProducts();loadCategories();loadPayments()})
 </script>

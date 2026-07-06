@@ -43,13 +43,13 @@ func (ah *AuthHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	token, err := ah.svc.Login(ctx, req.Email, req.Password)
+	token, user, err := ah.svc.Login(ctx, req.Email, req.Password)
 	if err != nil {
 		handleError(ctx, err)
 		return
 	}
 
-	rsp := newAuthResponse(token)
+	rsp := newAuthResponse(token, user)
 
 	handleSuccess(ctx, rsp)
 }

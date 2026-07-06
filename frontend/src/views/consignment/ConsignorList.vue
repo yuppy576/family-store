@@ -16,6 +16,9 @@
       <el-button type="primary" @click="dialogVisible=true;isEdit=false;form={}">
         <el-icon><Plus /></el-icon> 新增寄卖人
       </el-button>
+      <el-button type="success" @click="handleExport">
+        <el-icon><Download /></el-icon> 导出数据
+      </el-button>
     </div>
 
     <el-card shadow="never">
@@ -74,7 +77,9 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Download } from '@element-plus/icons-vue'
 import { loadAllConsignors, createConsignor, updateConsignor, deleteConsignor } from '@/api/consignment'
+import { exportConsignors } from '@/utils/export'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -132,6 +137,7 @@ async function submitForm() {
   } finally { submitting.value = false }
 }
 
+function handleExport(){exportConsignors(tableData.value)}
 onMounted(loadData)
 </script>
 <style scoped>

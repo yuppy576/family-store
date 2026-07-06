@@ -44,13 +44,15 @@ func newMeta(total, limit, skip uint64) meta {
 
 // authResponse represents an authentication response body
 type authResponse struct {
-	AccessToken string `json:"token" example:"v2.local.Gdh5kiOTyyaQ3_bNykYDeYHO21Jg2..."`
+	AccessToken string      `json:"token" example:"v2.local.Gdh5kiOTyyaQ3_bNykYDeYHO21Jg2..."`
+	User        userResponse `json:"user"`
 }
 
 // newAuthResponse is a helper function to create a response body for handling authentication data
-func newAuthResponse(token string) authResponse {
+func newAuthResponse(token string, user *domain.User) authResponse {
 	return authResponse{
 		AccessToken: token,
+		User:        newUserResponse(user),
 	}
 }
 

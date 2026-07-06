@@ -5,6 +5,7 @@
         <div class="login-header">
           <h2>家族门店管理系统</h2>
           <p class="login-subtitle">寄卖行 · 零售管理</p>
+          <p class="login-domain" v-if="currentDomain">{{ currentDomain }}</p>
         </div>
       </template>
       <el-form
@@ -41,13 +42,16 @@
             {{ loading ? '登录中...' : '登 录' }}
           </el-button>
         </el-form-item>
+        <el-form-item class="register-link">
+          <a href="https://store.yuppy576.top" target="_blank" class="register-btn">还没有账号？立即注册免费试用</a>
+        </el-form-item>
       </el-form>
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
 import { Message, Lock } from '@element-plus/icons-vue'
@@ -72,6 +76,14 @@ const rules: FormRules = {
     { min: 6, message: '密码长度不能少于6位', trigger: 'blur' },
   ],
 }
+
+const currentDomain = computed(() => {
+  const host = window.location.hostname
+  if (host.endsWith('.store.yuppy576.top')) {
+    return host
+  }
+  return ''
+})
 
 async function handleLogin() {
   const valid = await formRef.value?.validate().catch(() => false)
@@ -117,5 +129,27 @@ async function handleLogin() {
   margin: 0;
   font-size: 13px;
   color: #909399;
+}
+
+.login-domain {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #667eea;
+  font-weight: 500;
+}
+
+.register-link {
+  margin-bottom: 0;
+  text-align: center;
+}
+
+.register-btn {
+  font-size: 13px;
+  color: #667eea;
+  text-decoration: none;
+}
+
+.register-btn:hover {
+  text-decoration: underline;
 }
 </style>

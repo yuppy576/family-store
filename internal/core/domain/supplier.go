@@ -11,6 +11,7 @@ type Supplier struct {
 	Memo          string    `json:"memo"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
+	StoreID       uint64    `json:"store_id"`
 }
 
 type PurchaseStatus string
@@ -31,6 +32,7 @@ type Purchase struct {
 	CreatedAt    time.Time       `json:"created_at"`
 	UpdatedAt    time.Time       `json:"updated_at"`
 	Supplier     *Supplier       `json:"supplier,omitempty"`
+	StoreID      uint64          `json:"store_id"`
 }
 
 type PurchaseItem struct {
@@ -42,4 +44,5 @@ type PurchaseItem struct {
 	TotalPrice float64   `json:"total_price"`
 	CreatedAt  time.Time `json:"created_at"`
 	Product    *Product  `json:"product,omitempty"`
+	StoreID    uint64    `json:"store_id"`
 }

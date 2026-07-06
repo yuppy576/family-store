@@ -105,8 +105,8 @@ func (ph *PaymentHandler) GetPayment(ctx *gin.Context) {
 
 // listPaymentsRequest represents a request body for listing payments
 type listPaymentsRequest struct {
-	Skip  uint64 `form:"skip" binding:"required,min=0" example:"0"`
-	Limit uint64 `form:"limit" binding:"required,min=5" example:"5"`
+	Skip  uint64 `form:"skip" example:"0"`
+	Limit uint64 `form:"limit" example:"5"`
 }
 
 // ListPayments godoc

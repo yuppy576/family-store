@@ -20,4 +20,5 @@ type Payment struct {
 	Logo      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	StoreID   uint64
 }

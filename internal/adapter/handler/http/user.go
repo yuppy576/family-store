@@ -112,7 +112,7 @@ func (uh *UserHandler) ListUsers(ctx *gin.Context) {
 
 // getUserRequest represents the request body for getting a user
 type getUserRequest struct {
-	ID uint64 `uri:"id" binding:"required,min=1" example:"1"`
+	ID uint64 `uri:"id" example:"1"`
 }
 
 // GetUser godoc
@@ -137,6 +137,24 @@ func (uh *UserHandler) GetUser(ctx *gin.Context) {
 	}
 
 	user, err := uh.svc.GetUser(ctx, req.ID)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
+
+	rsp := newUserResponse(user)
+
+	handleSuccess(ctx, rsp)
+}
+
+func (uh *UserHandler) GetMe(ctx *gin.Context) {
+	payload := getAuthPayload(ctx, authorizationPayloadKey)
+	if payload == nil {
+		handleError(ctx, domain.ErrUnauthorized)
+		return
+	}
+
+	user, err := uh.svc.GetUser(ctx, payload.UserID)
 	if err != nil {
 		handleError(ctx, err)
 		return

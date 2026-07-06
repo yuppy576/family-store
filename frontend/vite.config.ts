@@ -6,7 +6,7 @@ import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 export default defineConfig({
-  base: '/store/',
+  base: '/',
   plugins: [
     vue(),
     AutoImport({ resolvers: [ElementPlusResolver()] }),

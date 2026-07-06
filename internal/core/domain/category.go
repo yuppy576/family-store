@@ -6,6 +6,7 @@ import "time"
 type Category struct {
 	ID        uint64
 	Name      string
+	StoreID   uint64
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

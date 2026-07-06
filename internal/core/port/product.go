@@ -20,6 +20,8 @@ type ProductRepository interface {
 	UpdateProduct(ctx context.Context, product *domain.Product) (*domain.Product, error)
 	// DeleteProduct deletes a product
 	DeleteProduct(ctx context.Context, id uint64) error
+	// ListLowStockProducts selects products with stock below threshold
+	ListLowStockProducts(ctx context.Context, threshold int64) ([]domain.Product, error)
 }
 
 // ProductService is an interface for interacting with product-related business logic
@@ -34,4 +36,6 @@ type ProductService interface {
 	UpdateProduct(ctx context.Context, product *domain.Product) (*domain.Product, error)
 	// DeleteProduct deletes a product
 	DeleteProduct(ctx context.Context, id uint64) error
+	// ListLowStockProducts returns products with stock below threshold
+	ListLowStockProducts(ctx context.Context, threshold int64) ([]domain.Product, error)
 }

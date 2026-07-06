@@ -1,5 +1,25 @@
 import request from './request'
 
+export interface ConsignmentData {
+  itemName: string
+  description?: string
+  consignorId: number
+  expectedPrice?: number
+  commission?: number
+  status: string
+  isVehicle: boolean
+  remark?: string
+  vehicleBrand?: string
+  vehicleModel?: string
+  vehiclePlate?: string
+  vehicleVin?: string
+  vehicleYear?: number
+  vehicleMileage?: number
+  vehicleColor?: string
+  vehicleInspection?: string
+  vehicleInsurance?: string
+}
+
 // ---- Consignors ----
 export function loadAllConsignors(params: any) {
   return request.get('/consignment/consignors', { params })

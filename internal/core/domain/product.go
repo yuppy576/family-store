@@ -20,5 +20,6 @@ type Product struct {
 	Unit           string
 	BaseUnit       string
 	ConversionRate int32
+	StoreID        uint64
 	Category       *Category
 }

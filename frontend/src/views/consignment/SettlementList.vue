@@ -44,6 +44,11 @@
         <el-table-column label="时间" width="170">
           <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
         </el-table-column>
+        <el-table-column label="操作" width="100" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" type="info" link @click="printSettlementSlip(row)">🖨️打印</el-button>
+          </template>
+        </el-table-column>
       </el-table>
       <el-empty v-if="!loading && tableData.length === 0" description="暂无结算记录" />
     </el-card>
@@ -86,6 +91,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { loadAllConsignments, createSettlement, listSettlements } from '@/api/consignment'
+import { printSettlement } from '@/utils/print'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -144,6 +150,11 @@ async function submitForm() {
     dialogVisible.value = false
     loadData()
   } catch {} finally { submitting.value = false }
+}
+
+function printSettlementSlip(row: any) {
+  const item = consignmentOptions.value.find(c => c.id === consignmentId.value) || {}
+  printSettlement(row, item, item?.consignor)
 }
 
 const route = useRoute()

@@ -18,7 +18,20 @@ type Order struct {
 	ReceiptCode  uuid.UUID
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+	StoreID      uint64
 	User         *User
 	Payment      *Payment
 	Products     []OrderProduct
+}
+
+type SalesStats struct {
+	TotalOrders  uint64  `json:"total_orders"`
+	TotalRevenue float64 `json:"total_revenue"`
+	TotalPaid    float64 `json:"total_paid"`
+}
+
+type DailySales struct {
+	Date         time.Time `json:"date"`
+	TotalOrders  uint64    `json:"total_orders"`
+	TotalRevenue float64   `json:"total_revenue"`
 }

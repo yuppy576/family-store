@@ -27,9 +27,10 @@ func NewUserRepository(db *postgres.DB) *UserRepository {
 
 // CreateUser creates a new user in the database
 func (ur *UserRepository) CreateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
+	storeID := getStoreIDFromContext(ctx)
 	query := ur.db.QueryBuilder.Insert("users").
-		Columns("name", "email", "password").
-		Values(user.Name, user.Email, user.Password).
+		Columns("name", "email", "password", "store_id").
+		Values(user.Name, user.Email, user.Password, storeID).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -45,6 +46,7 @@ func (ur *UserRepository) CreateUser(ctx context.Context, user *domain.User) (*d
 		&user.Role,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user.StoreID,
 	)
 	if err != nil {
 		if errCode := ur.db.ErrorCode(err); errCode == "23505" {
@@ -59,10 +61,12 @@ func (ur *UserRepository) CreateUser(ctx context.Context, user *domain.User) (*d
 // GetUserByID gets a user by ID from the database
 func (ur *UserRepository) GetUserByID(ctx context.Context, id uint64) (*domain.User, error) {
 	var user domain.User
+	storeID := getStoreIDFromContext(ctx)
 
 	query := ur.db.QueryBuilder.Select("*").
 		From("users").
 		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{"store_id": storeID}).
 		Limit(1)
 
 	sql, args, err := query.ToSql()
@@ -78,6 +82,7 @@ func (ur *UserRepository) GetUserByID(ctx context.Context, id uint64) (*domain.U
 		&user.Role,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user.StoreID,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -89,14 +94,20 @@ func (ur *UserRepository) GetUserByID(ctx context.Context, id uint64) (*domain.U
 	return &user, nil
 }
 
-// GetUserByEmailAndPassword gets a user by email from the database
+// GetUserByEmail gets a user by email from the database
 func (ur *UserRepository) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
 	var user domain.User
+	storeID := getStoreIDFromContext(ctx)
 
 	query := ur.db.QueryBuilder.Select("*").
 		From("users").
-		Where(sq.Eq{"email": email}).
-		Limit(1)
+		Where(sq.Eq{"email": email})
+
+	if storeID > 0 {
+		query = query.Where(sq.Eq{"store_id": storeID})
+	}
+
+	query = query.Limit(1)
 
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -111,6 +122,7 @@ func (ur *UserRepository) GetUserByEmail(ctx context.Context, email string) (*do
 		&user.Role,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user.StoreID,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -126,12 +138,14 @@ func (ur *UserRepository) GetUserByEmail(ctx context.Context, email string) (*do
 func (ur *UserRepository) ListUsers(ctx context.Context, skip, limit uint64) ([]domain.User, error) {
 	var user domain.User
 	var users []domain.User
+	storeID := getStoreIDFromContext(ctx)
 
 	query := ur.db.QueryBuilder.Select("*").
 		From("users").
+		Where(sq.Eq{"store_id": storeID}).
 		OrderBy("id").
 		Limit(limit).
-		Offset((skip - 1) * limit)
+		Offset(skip * limit)
 
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -153,6 +167,7 @@ func (ur *UserRepository) ListUsers(ctx context.Context, skip, limit uint64) ([]
 			&user.Role,
 			&user.CreatedAt,
 			&user.UpdatedAt,
+			&user.StoreID,
 		)
 		if err != nil {
 			return nil, err
@@ -170,6 +185,7 @@ func (ur *UserRepository) UpdateUser(ctx context.Context, user *domain.User) (*d
 	email := nullString(user.Email)
 	password := nullString(user.Password)
 	role := nullString(string(user.Role))
+	storeID := getStoreIDFromContext(ctx)
 
 	query := ur.db.QueryBuilder.Update("users").
 		Set("name", sq.Expr("COALESCE(?, name)", name)).
@@ -178,6 +194,7 @@ func (ur *UserRepository) UpdateUser(ctx context.Context, user *domain.User) (*d
 		Set("role", sq.Expr("COALESCE(?, role)", role)).
 		Set("updated_at", time.Now()).
 		Where(sq.Eq{"id": user.ID}).
+		Where(sq.Eq{"store_id": storeID}).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -193,6 +210,7 @@ func (ur *UserRepository) UpdateUser(ctx context.Context, user *domain.User) (*d
 		&user.Role,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user.StoreID,
 	)
 	if err != nil {
 		if errCode := ur.db.ErrorCode(err); errCode == "23505" {
@@ -206,8 +224,10 @@ func (ur *UserRepository) UpdateUser(ctx context.Context, user *domain.User) (*d
 
 // DeleteUser deletes a user by ID from the database
 func (ur *UserRepository) DeleteUser(ctx context.Context, id uint64) error {
+	storeID := getStoreIDFromContext(ctx)
 	query := ur.db.QueryBuilder.Delete("users").
-		Where(sq.Eq{"id": id})
+		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{"store_id": storeID})
 
 	sql, args, err := query.ToSql()
 	if err != nil {

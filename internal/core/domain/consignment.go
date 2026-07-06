@@ -43,6 +43,7 @@ type Consignor struct {
 	Memo      string    `json:"memo"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	StoreID   uint64    `json:"store_id"`
 }
 
 // Consignment represents an item placed on consignment
@@ -65,6 +66,7 @@ type Consignment struct {
 	CreatedAt        time.Time         `json:"created_at"`
 	UpdatedAt        time.Time         `json:"updated_at"`
 	Consignor        *Consignor        `json:"consignor,omitempty"`
+	StoreID          uint64            `json:"store_id"`
 }
 
 // ConsignmentVehicle stores vehicle-specific consignment details

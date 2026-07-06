@@ -37,4 +37,10 @@ var (
 	ErrUnauthorized = errors.New("user is unauthorized to access the resource")
 	// ErrForbidden is an error for when the user is forbidden to access the resource
 	ErrForbidden = errors.New("user is forbidden to access the resource")
+	// ErrInvalidSubscriptionPlan is an error for when the subscription plan is invalid
+	ErrInvalidSubscriptionPlan = errors.New("invalid subscription plan")
+	// ErrStoreFrozen is an error for when the store is frozen
+	ErrStoreFrozen = errors.New("store is frozen, please contact support")
+	// ErrSubscriptionExpired is an error for when the subscription is expired
+	ErrSubscriptionExpired = errors.New("subscription has expired, please renew")
 )

@@ -33,6 +33,11 @@ func NewRouter(
 	consignmentHandler ConsignmentHandler,
 	supplierHandler SupplierHandler,
 	purchaseHandler PurchaseHandler,
+	auditLogHandler AuditLogHandler,
+	auditLogService port.AuditLogService,
+	storeHandler StoreHandler,
+	subscriptionHandler SubscriptionHandler,
+	reportHandler ReportHandler,
 ) (*Router, error) {
 	// Disable debug mode in production
 	if config.Env == "production" {
@@ -46,7 +51,7 @@ func NewRouter(
 	ginConfig.AllowOrigins = originsList
 
 	router := gin.New()
-	router.Use(sloggin.New(slog.Default()), gin.Recovery(), cors.New(ginConfig))
+	router.Use(sloggin.New(slog.Default()), gin.Recovery(), cors.New(ginConfig), subdomainMiddleware())
 
 	// Custom validators
 	v, ok := binding.Validator.Engine().(*validator.Validate)
@@ -74,9 +79,10 @@ func NewRouter(
 			authUser := user.Group("/").Use(authMiddleware(token))
 			{
 				authUser.GET("/", userHandler.ListUsers)
+				authUser.GET("/me", userHandler.GetMe)
 				authUser.GET("/:id", userHandler.GetUser)
 
-				admin := authUser.Use(adminMiddleware())
+				admin := authUser.Use(adminMiddleware(), auditMiddleware(auditLogService))
 				{
 					admin.PUT("/:id", userHandler.UpdateUser)
 					admin.DELETE("/:id", userHandler.DeleteUser)
@@ -88,7 +94,7 @@ func NewRouter(
 			payment.GET("/", paymentHandler.ListPayments)
 			payment.GET("/:id", paymentHandler.GetPayment)
 
-			admin := payment.Use(adminMiddleware())
+			admin := payment.Use(adminMiddleware(), auditMiddleware(auditLogService))
 			{
 				admin.POST("/", paymentHandler.CreatePayment)
 				admin.PUT("/:id", paymentHandler.UpdatePayment)
@@ -100,7 +106,7 @@ func NewRouter(
 			category.GET("/", categoryHandler.ListCategories)
 			category.GET("/:id", categoryHandler.GetCategory)
 
-			admin := category.Use(adminMiddleware())
+			admin := category.Use(adminMiddleware(), auditMiddleware(auditLogService))
 			{
 				admin.POST("/", categoryHandler.CreateCategory)
 				admin.PUT("/:id", categoryHandler.UpdateCategory)
@@ -110,16 +116,17 @@ func NewRouter(
 		product := v1.Group("/products").Use(authMiddleware(token))
 		{
 			product.GET("/", productHandler.ListProducts)
+			product.GET("/low-stock", productHandler.ListLowStockProducts)
 			product.GET("/:id", productHandler.GetProduct)
 
-			admin := product.Use(adminMiddleware())
+			admin := product.Use(adminMiddleware(), auditMiddleware(auditLogService))
 			{
 				admin.POST("/", productHandler.CreateProduct)
 				admin.PUT("/:id", productHandler.UpdateProduct)
 				admin.DELETE("/:id", productHandler.DeleteProduct)
 			}
 		}
-		og := v1.Group("/orders").Use(authMiddleware(token))
+		og := v1.Group("/orders").Use(authMiddleware(token), auditMiddleware(auditLogService))
 		{
 			og.POST("/", orderHandler.CreateOrder)
 			og.POST("", orderHandler.CreateOrder)
@@ -145,7 +152,7 @@ func NewRouter(
 		consignment.GET("/expiring", consignmentHandler.ListExpiring)
 	}
 	// Admin routes
-	ca := v1.Group("/consignment").Use(authMiddleware(token), adminMiddleware())
+	ca := v1.Group("/consignment").Use(authMiddleware(token), adminMiddleware(), auditMiddleware(auditLogService))
 	{
 		ca.POST("/consignors", consignmentHandler.CreateConsignor)
 		ca.PUT("/consignors/:id", consignmentHandler.UpdateConsignor)
@@ -163,7 +170,7 @@ func NewRouter(
 		sg.GET("/", supplierHandler.List)
 		sg.GET("", supplierHandler.List)  // no trailing slash
 		sg.GET("/:id", supplierHandler.Get)
-		sa := sg.Use(adminMiddleware())
+		sa := sg.Use(adminMiddleware(), auditMiddleware(auditLogService))
 		{
 			sa.POST("/", supplierHandler.Create)
 			sa.POST("", supplierHandler.Create)
@@ -177,11 +184,35 @@ func NewRouter(
 		pg.GET("", purchaseHandler.List)
 		pg.GET("/:id", purchaseHandler.Get)
 		pg.GET("/:id/items", purchaseHandler.ListItems)
-		pa := pg.Use(adminMiddleware())
+		pa := pg.Use(adminMiddleware(), auditMiddleware(auditLogService))
 		{
 			pa.POST("/", purchaseHandler.Create)
 			pa.POST("", purchaseHandler.Create)
 		}
+	}
+
+	audit := v1.Group("/audit-logs").Use(authMiddleware(token), adminMiddleware())
+	{
+		audit.GET("/", auditLogHandler.ListAuditLogs)
+	}
+
+	stores := v1.Group("/stores")
+	{
+		stores.POST("/register", storeHandler.Register)
+		stores.GET("/", storeHandler.GetStoreByDomain)
+	}
+
+	subscription := v1.Group("/subscription").Use(authMiddleware(token), adminMiddleware())
+	{
+		subscription.GET("/", subscriptionHandler.GetSubscription)
+		subscription.POST("/renew", subscriptionHandler.RenewSubscription)
+		subscription.POST("/activate", subscriptionHandler.ActivateSubscription)
+	}
+
+	report := v1.Group("/reports").Use(authMiddleware(token))
+	{
+		report.GET("/sales/stats", reportHandler.GetSalesStats)
+		report.GET("/sales/daily", reportHandler.GetDailySales)
 	}
 
 	return &Router{

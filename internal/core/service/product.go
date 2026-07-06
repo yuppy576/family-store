@@ -255,3 +255,21 @@ func (ps *ProductService) DeleteProduct(ctx context.Context, id uint64) error {
 
 	return ps.productRepo.DeleteProduct(ctx, id)
 }
+
+// ListLowStockProducts returns products with stock below threshold
+func (ps *ProductService) ListLowStockProducts(ctx context.Context, threshold int64) ([]domain.Product, error) {
+	products, err := ps.productRepo.ListLowStockProducts(ctx, threshold)
+	if err != nil {
+		return nil, domain.ErrInternal
+	}
+
+	for i, product := range products {
+		category, err := ps.categoryRepo.GetCategoryByID(ctx, product.CategoryID)
+		if err != nil && err != domain.ErrDataNotFound {
+			return nil, domain.ErrInternal
+		}
+		products[i].Category = category
+	}
+
+	return products, nil
+}

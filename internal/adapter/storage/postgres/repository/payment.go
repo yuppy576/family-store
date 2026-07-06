@@ -27,9 +27,10 @@ func NewPaymentRepository(db *postgres.DB) *PaymentRepository {
 
 // CreatePayment creates a new payment record in the database
 func (pr *PaymentRepository) CreatePayment(ctx context.Context, payment *domain.Payment) (*domain.Payment, error) {
+	storeID := getStoreIDFromContext(ctx)
 	query := pr.db.QueryBuilder.Insert("payments").
-		Columns("name", "type", "logo").
-		Values(payment.Name, payment.Type, payment.Logo).
+		Columns("name", "type", "logo", "store_id").
+		Values(payment.Name, payment.Type, payment.Logo, storeID).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -44,6 +45,7 @@ func (pr *PaymentRepository) CreatePayment(ctx context.Context, payment *domain.
 		&payment.Logo,
 		&payment.CreatedAt,
 		&payment.UpdatedAt,
+		&payment.StoreID,
 	)
 	if err != nil {
 		if errCode := pr.db.ErrorCode(err); errCode == "23505" {
@@ -58,10 +60,12 @@ func (pr *PaymentRepository) CreatePayment(ctx context.Context, payment *domain.
 // GetPaymentByID retrieves a payment record from the database by id
 func (pr *PaymentRepository) GetPaymentByID(ctx context.Context, id uint64) (*domain.Payment, error) {
 	var payment domain.Payment
+	storeID := getStoreIDFromContext(ctx)
 
 	query := pr.db.QueryBuilder.Select("*").
 		From("payments").
 		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{"store_id": storeID}).
 		Limit(1)
 
 	sql, args, err := query.ToSql()
@@ -76,6 +80,7 @@ func (pr *PaymentRepository) GetPaymentByID(ctx context.Context, id uint64) (*do
 		&payment.Logo,
 		&payment.CreatedAt,
 		&payment.UpdatedAt,
+		&payment.StoreID,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -91,12 +96,14 @@ func (pr *PaymentRepository) GetPaymentByID(ctx context.Context, id uint64) (*do
 func (pr *PaymentRepository) ListPayments(ctx context.Context, skip, limit uint64) ([]domain.Payment, error) {
 	var payment domain.Payment
 	var payments []domain.Payment
+	storeID := getStoreIDFromContext(ctx)
 
 	query := pr.db.QueryBuilder.Select("*").
 		From("payments").
+		Where(sq.Eq{"store_id": storeID}).
 		OrderBy("id").
 		Limit(limit).
-		Offset((skip - 1) * limit)
+		Offset(skip * limit)
 
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -116,6 +123,7 @@ func (pr *PaymentRepository) ListPayments(ctx context.Context, skip, limit uint6
 			&payment.Logo,
 			&payment.CreatedAt,
 			&payment.UpdatedAt,
+			&payment.StoreID,
 		)
 		if err != nil {
 			return nil, err
@@ -132,6 +140,7 @@ func (pr *PaymentRepository) UpdatePayment(ctx context.Context, payment *domain.
 	name := nullString(payment.Name)
 	paymentType := nullString(string(payment.Type))
 	logo := nullString(payment.Logo)
+	storeID := getStoreIDFromContext(ctx)
 
 	query := pr.db.QueryBuilder.Update("payments").
 		Set("name", sq.Expr("COALESCE(?, name)", name)).
@@ -139,6 +148,7 @@ func (pr *PaymentRepository) UpdatePayment(ctx context.Context, payment *domain.
 		Set("logo", sq.Expr("COALESCE(?, logo)", logo)).
 		Set("updated_at", time.Now()).
 		Where(sq.Eq{"id": payment.ID}).
+		Where(sq.Eq{"store_id": storeID}).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -153,6 +163,7 @@ func (pr *PaymentRepository) UpdatePayment(ctx context.Context, payment *domain.
 		&payment.Logo,
 		&payment.CreatedAt,
 		&payment.UpdatedAt,
+		&payment.StoreID,
 	)
 	if err != nil {
 		if errCode := pr.db.ErrorCode(err); errCode == "23505" {
@@ -166,8 +177,10 @@ func (pr *PaymentRepository) UpdatePayment(ctx context.Context, payment *domain.
 
 // DeletePayment deletes a payment record from the database by id
 func (pr *PaymentRepository) DeletePayment(ctx context.Context, id uint64) error {
+	storeID := getStoreIDFromContext(ctx)
 	query := pr.db.QueryBuilder.Delete("payments").
-		Where(sq.Eq{"id": id})
+		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{"store_id": storeID})
 
 	sql, args, err := query.ToSql()
 	if err != nil {

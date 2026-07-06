@@ -11,6 +11,7 @@ type OrderProduct struct {
 	TotalPrice float64
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
+	StoreID    uint64
 	Order      *Order
 	Product    *Product
 }

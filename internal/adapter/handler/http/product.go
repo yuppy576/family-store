@@ -111,8 +111,8 @@ func (ph *ProductHandler) GetProduct(ctx *gin.Context) {
 type listProductsRequest struct {
 	CategoryID uint64 `form:"category_id" binding:"omitempty,min=1" example:"1"`
 	Query      string `form:"q" binding:"omitempty" example:"Chiki"`
-	Skip       uint64 `form:"skip" binding:"required,min=0" example:"0"`
-	Limit      uint64 `form:"limit" binding:"required,min=5" example:"5"`
+	Skip       uint64 `form:"skip" example:"0"`
+	Limit      uint64 `form:"limit" example:"5"`
 }
 
 // ListProducts godoc
@@ -253,4 +253,37 @@ func (ph *ProductHandler) DeleteProduct(ctx *gin.Context) {
 	}
 
 	handleSuccess(ctx, nil)
+}
+
+type listLowStockRequest struct {
+	Threshold int64 `form:"threshold" example:"10"`
+}
+
+func (ph *ProductHandler) ListLowStockProducts(ctx *gin.Context) {
+	var req listLowStockRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		validationError(ctx, err)
+		return
+	}
+
+	if req.Threshold == 0 {
+		req.Threshold = 10
+	}
+
+	products, err := ph.svc.ListLowStockProducts(ctx, req.Threshold)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
+
+	productsList := make([]productResponse, 0)
+	for _, product := range products {
+		productsList = append(productsList, newProductResponse(&product))
+	}
+
+	total := uint64(len(productsList))
+	meta := newMeta(total, total, 0)
+	rsp := toMap(meta, productsList, "products")
+
+	handleSuccess(ctx, rsp)
 }
